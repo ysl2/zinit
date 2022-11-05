@@ -1,340 +1,352 @@
 #compdef zinit
+# ------------------------------------------------------------------------------
+# Description
+# -----------
+#
+#  Completion script for zinit (https://github.com/zdharm-continuum/zinit.com/)
+#
+# ------------------------------------------------------------------------------
+# Authors
+# -------
+#
+#  * Vladislav Doster <mvdoster@gmail.com>
+#
+# ------------------------------------------------------------------------------
 
-setopt localoptions warncreateglobal typesetsilent
+declare -g _zinit_run_cwd
 
-local curcontext="$curcontext" state state_descr line ret=1
-local -a expl
-
-typeset -a commands
-commands=(
-  zstatus:'overall Zinit status'
-  times:'statistics on plugin loading times'
-  self-update:'updates Zinit'
-  help:'usage information'
-  man:'manual'
-  env-whitelist:'specify names (also patterns) of parameters to be left unchanged during an unload'
-  load:'load plugin'
-  delete:'delete plugin'
-  unload:'unload plugin'
-  snippet:"source (or add to PATH with --command) local or remote file (-f: force - don't use cache)"
-  update:'Git update plugin (or all plugins and snippets if --all passed)'
-  status:'Git status for plugin (or all plugins if --all passed)'
-  report:'show plugin'"'"'s report (or all plugins'"'"' if --all passed)'
-  loaded:'show what plugins are loaded'
-  list:'show what plugins are loaded'
-  ls:'list snippets in formatted and colorized manner'
-  cd:"go into plugin's directory"
-  create:'create plugin (also together with Github repository)'
-  edit:"edit plugin's file with \$EDITOR"
-  glance:"look at plugin's source (pygmentize, {,source-}highlight)"
-  stress:'test plugin for compatibility with set of options'
-  changes:"view plugin's git log"
-  recently:"show plugins that changed recently, argument is e.g. 1 month 2 days"
-  clist:'list completions in use'
-  cclear:'clear stray and improper completions'
-  completions:'list completions in use'
-  cdisable:'disable completion'
-  cenable:'enable completion'
-  creinstall:'install completions for plugin'
-  cuninstall:'uninstall completions for plugin'
-  csearch:'search for available completions from any plugin'
-  compinit:'refresh installed completions'
-  dtrace:"start tracking what's going on in session"
-  dstart:"start tracking what's going on in session"
-  dstop:"stop tracking what's going on in session"
-  dunload:'revert changes recorded between dstart and dstop'
-  dreport:"report what was going on in session"
-  dclear:'clear report of what was going on in session'
-  compile:'compile plugin (or all plugins if --all passed)'
-  uncompile:'remove compiled version of plugin (or of all plugins if --all passed)'
-  compiled:'show which plugins are compiled'
-  cdlist:'show compdef replay list'
-  cdreplay:'replay compdefs (to be done after compinit)'
-  cdclear:'clear compdef replay list'
-  srv:'control a service, command can be: stop,start,restart,next,quit; `next'' moves the service to another Zshell'
-  recall:'fetch saved ice modifiers and construct `zinit ice ...'' command'
-  env-whitelist:'allows to specify names (also patterns) of variables left unchanged during an unload. -v - verbose'
-  bindkeys:'lists bindkeys set up by each plugin'
-  module:'manage binary Zsh module shipped with Zinit, see `zinit module help'''
-  run:"execute code inside plugin's folder"
-  {add-fpath,fpath}:'add plugin folder to $fpath'
+# Commands [[[
+_commands=(
+  'bindkeys:List of keymap bindings set by each plugin'
+  'cache:List or clean every cached package'
+  'cd:Move into directory of an installed plugin or snippet'
+  'clist:List of compiled plugins'
+  'compile:Compile a plugin'
+  'config:Manages the zinit configuration files'
+  'create:Create git repository containing plugin boilerplate code'
+  'delete:Clean and remove a plugin or snippet'
+  'doctor:Show information about the installed tooling.'
+  'help:Show information about a command'
+  'info:Show information about a package'
+  'install:Install all the dependencies listed within package.json'
+  'light:Load plugin without reporting or tracking'
+  'load:Load plugin with reporting and tracking'
+  'module:Manage the zinit ZSH binary module'
+  'reload:Restart the zsh process'
+  'run:Run a defined package script'
+  'self-update:Update zinit repository and re-compile zinit'
+  'uncompile:Remove compiled plugins'
+  'versions:Display version information of currently installed zinit, Node.js, and its dependencies'
+  'why:Show information about why a package is installed'
 )
 
-_arguments -C \
-  '1: :->command'\
-  '*: :->argument' \
-  && ret=0
+_global_commands=(
+  'add:Installs a package and any packages that it depends on'
+  'bin:Displays the location of the zinit bin folder'
+  'list:List installed packages'
+  'remove:Remove installed package'
+  'update:Updates packages to their latest version'
+)
+# ;;
+# Function: _zinit_find_package_json [[[
+_zinit_find_package_json() {
+  local dir=$(cd "$1" && pwd)
 
-case $state in
-  command)
-    _describe -t commands "Zinit command" commands && ret=0
-    ;;
-  argument)
-    case $words[2] in
-      help)
-        _message "Hit enter to get usage information" && ret=0
-        ;;
-      man)
-        _message "Hit enter to view manual" && ret=0
-        ;;
-      zstatus)
-        _message "Hit enter to get overall status information" && ret=0
-        ;;
-      times)
-        _message "Hit enter to get plugin load time statistics" && ret=0
-        ;;
-      load|light)
-        typeset -a plugins
-        plugins=( "${ZINIT[PLUGINS_DIR]}"/*(N:t) )
-        plugins=( "${plugins[@]//---//}" )
-        plugins=( "${plugins[@]:#_local/zinit}" )
-        plugins=( "${plugins[@]:#custom}" )
+  while true
+  do
+    if [[ -e "${dir}/package.json" ]]; then
+      echo "${dir}/package.json"
+      return
+    fi
 
-        _alternative \
-          'plugins:-- Plugin --:compadd -a - plugins' \
-          'directories:-- Directory --:_directories' \
-          && ret=0
-        ;;
-      run|fpath|add-fpath)
-        typeset -a plugins
-        plugins=( "${ZINIT[PLUGINS_DIR]}"/*(N:t) )
-        plugins=( "${plugins[@]//---//}" )
-        plugins=( "${plugins[@]:#_local/zinit}" )
-        plugins=( "${plugins[@]:#custom}" )
+    if [[ $dir == '/' ]]; then
+      break
+    fi
 
-        local -a opts
-        if [[ $words[2] = run ]]; then
-          opts=( -l )
-        else
-          opts=( -f --front )
-        fi
+    dir=$(dirname $dir)
+  done
+} # ;;
+# Function: _zinit_commands_scripts [[[
+_zinit_commands_scripts() {
+  local -a scripts binaries
+  local packageJson
 
-        _alternative \
-          'plugins:-- Plugin --:compadd -a - plugins' \
-          'directories:-- Directory --:_directories' \
-          'opts:-- Option --:compadd -a - opts' \
-          && ret=0
-        ;;
-      compile|stress|edit|glance|recall|update|status|cd|changes|delete)
-        typeset -a plugins
-        plugins=( "${ZINIT[PLUGINS_DIR]}"/*(N:t) )
-        plugins=( "${plugins[@]//---//}" )
-        plugins=( "${plugins[@]:#_local/zinit}" )
-        plugins=( "${plugins[@]:#custom}" )
+  if [[ -n $opt_args[--cwd] ]]; then
+    packageJson=$(_zinit_find_package_json $opt_args[--cwd])
+    binaries=($(cd $opt_args[--cwd] && echo node_modules/.bin/*(x:t)))
+  else
+    packageJson=$(_zinit_find_package_json $pwd)
+    binaries=($(echo node_modules/.bin/*(x:t)))
+  fi
 
-        # snippets
-        local -a snippets snippets_alreadyld
-        local sni
+  if [[ -n $packageJson ]]; then
+    scripts=($(cat "$packageJson" | perl -0777 -MJSON::PP -n -E '$r=decode_json($_); do{($k=$_)=~s/:/\\:/g;say $k}for sort keys %{$r->{scripts}}'))
+  fi
 
-        snippets=( "${ZINIT[SNIPPETS_DIR]}"/**/._zinit(D/:h) )
-        snippets=( ${snippets[@]#${ZINIT[SNIPPETS_DIR]}/} )
-        snippets=( ${snippets[@]/(#b)(http|https|ftp|ftps|scp)--/${match[1]}://} )
-        snippets=( ${snippets[@]/--//} )
+  _describe 'subcommands' _commands -- _global_commands -- scripts -- binaries
+} # ;;
+# Function: _zinit_scripts [[[
+_zinit_scripts() {
+  local -a binaries scripts
+  local -a commands
+  local packageJson
 
-        for sni ( ${snippets[@]} ) {
-          if [[ -n ${ZINIT_SNIPPETS[$sni]} ]]; then
-            snippets_alreadyld+=( $sni )
-            snippets=( ${snippets[@]:#$sni} )
+  if [[ -n $_zinit_run_cwd ]]; then
+    packageJson=$(_zinit_find_package_json $_zinit_run_cwd)
+    if [[ -d "${_zinit_run_cwd}/node_modules" ]]; then
+      binaries=($(cd $_zinit_run_cwd && echo node_modules/.bin/*(x:t)))
+    else
+      binaries=($(cd $_zinit_run_cwd && zinit bin | perl -wln -e 'm{^[^:]+: (\S+)$} and print $1'))
+    fi
+  else
+    packageJson=$(_zinit_find_package_json $pwd)
+    if [[ -d node_modules ]]; then
+      binaries=($(echo node_modules/.bin/*(x:t)))
+    else
+      binaries=($(zinit bin | perl -wln -e 'm{^[^:]+: (\S+)$} and print $1'))
+    fi
+  fi
+
+  if [[ -n $packageJson ]]; then
+    scripts=("${(@f)$(cat ${packageJson} | perl -0777 -MJSON::PP -n -E '%r=%{decode_json($_)->{scripts}}; do{$k=$_;($e=$k)=~s/:/\\:/g; printf "$e:$r{$k}\n"} for sort keys %r')}")
+  fi
+
+  commands=('env' $scripts $binaries)
+  _describe 'command' commands
+} # ;;
+# Function: _zinit_global_commands [[[
+_zinit_global_commands() {
+  local -a cmds
+  cmds=('ls:List installed packages')
+  _describe 'command' _global_commands
+} # ;;
+# Function: _zinit_commands [[[
+_zinit_commands() {
+  _describe 'command' _commands -- _global_commands
+} # ;;
+# Function: _zinit_add_files [[[
+_zinit_add_files() {
+  if compset -P "(file|link):"; then
+    _files
+  fi
+} # ;;
+# Function: _zinit_workspaces [[[
+_zinit_workspaces() {
+  local version=$(zinit --version |sed -n 's|\([0-9]*\).*|\1|p')
+  local -a workspaces
+  if [[ $version == "1" ]]; then
+    workspaces=(${(@f)$(zinit workspaces info |sed -n -e 's/^  "\([^"]*\)": {/\1/p')})
+  else
+    workspaces=(${(@f)$(zinit workspaces list --json | sed -n 's|.*"name":"\([^"]*\)"}|\1|p')})
+  fi
+  _describe 'workspace' workspaces
+} # ;;
+
+_zinit() {
+  local context state state_descr line
+  typeset -A opt_args
+
+  _arguments \
+    '(-h --help)'{-h,--help}'[output usage information]' \
+    '(-V --version)'{-V,--version}'[output the version number]' \
+    '--verbose[output verbose messages on internal operations]' \
+    '1: :_zinit_commands_scripts' \
+    '*:: :->command_args'
+
+
+  case $state in
+    command_args)
+      case $words[1] in
+        audit) # [[[
+          _arguments \
+            '--verbose[output verbose message]' \
+            '--json[format zinit log messages as lines of JSON]' \
+            '--level=[only print advisories with severity greater than or equal to]:level:(info low moderate high critical)' \
+            '--groups=[only audit dependencies from listed groups]:groups:->groups_args'
+          ;; # ]]]
+        compile) # [[[
+          _arguments -C \
+            '(-a --all)'{-a,--all}'[compile all plugins]' \
+            && ret=0
+          ;;
+        config) # [[[
+          _arguments \
+            '1: :(set get delete list)' \
+            '*:: :->config_args'
+          ;;
+        delete) # [[[
+          _arguments -C \
+            '(-a --all)'{-a,--all}'[Delete all plugins and snippets]' \
+            '(-c --clean)'{-c,--clean}'[Delete only the currently-not loaded plugins and snippets]' \
+            '(-h --help)'{-h,--help}'[Print this usage information]' \
+            '(-q --quiet)'{-q,--quiet}'[Do not show progress meter or error messages]' \
+            '(-y --yes)'{-y,--yes}'[Automatically confirm any yes/no prompts]' \
+            && ret=0
+          ;;
+        doctor) # [[[
+          ret=0
+          ;;
+        help) # [[[
+          return 0
+          ;;
+        info) # [[[
+          _arguments \
+            '1:package:' \
+            '2:field'
+          ;;
+        create) # [[[
+          _arguments \
+            '(-y --yes)'{-y,--yes}'[install packages in devDependencies]' \
+            '(-h --help)'{-h,--help}'[Print this usage information.]' \
+            ;;
+        link|unlink|outdated) # [[[
+          _arguments \
+            '1:package' \
+            ;;
+        list) # [[[
+          _arguments \
+            '--depth=[Limit the depth of the shown dependencies]:depth' \
+            '--pattern=[filter the list of dependencies by the pattern]'
+          ;;
+        module) # [[[
+          _arguments \
+            '1: :(build info help)' \
+            '*:: :->module_args'
+          ;;
+        reload) # [[[
+          _arguments -C \
+            '(-h --help)'{-h,--help}'[Print this usage information]' \
+            && return 0
+          ;;
+        remove|update) # [[[
+          _arguments \
+            '(-f --force)'{-f,--force}'[Re-run hooks (e.g., atpull'', cp'', etc.)]' \
+            '(-p --parallel)'{-p,--parallel}'[Makes curl perform updates in parallel as compared to the regular serial manner.]' \
+            '--all[Update all plugins and snippets]' \
+            '--plugins:' \
+            '--quiet[Do not show progress meter or error messages.  Makes Zinit mute. It will still output the data you ask for, potentially even to the terminal/stdout unless you redirect it.]' \
+            '--reset:' \
+            '--snippets:' \
+            '--verbose=[Makes curl verbose during the operation. Useful for debugging and seeing what is going on "under the hood".]' \
+            '*:package:'
+          ;;
+        run) # [[[
+          if [[ -n $opt_args[--cwd] ]]; then
+            _zinit_run_cwd=$opt_args[--cwd]
+          else
+            _zinit_run_cwd=''
           fi
-        }
+          _arguments \
+            '1: :_zinit_scripts' \
+            '*:: :_default'
+          ;;
+        uncompile) # [[[
+          _arguments -C \
+            '(-a --all)'{-a,--all}'[compile all plugins]' \
+            && ret=0
+          ;;
+        update) # [[[
+          _arguments \
+            '(--ignore-workspace-root-check -W)'{--ignore-workspace-root-check,-W}'[allows a package to be installed at the workspaces root]' \
+            '(-T --tilde)'{-T,--tilde}'[install the most recent release of the packages that have the same minor version]' \
+            '(-a --all)'{-a,--all}'[compile all plugins]' \
+            '--audit[checks for known security issues with the installed packages]' \
+            '1: :_zinit_global_commands' \
+            '*:: :->command_args'
+          ;;
+        version) # [[[
+          _arguments \
+            '--new-version[create a new version using an interactive session to prompt you]:version:' \
+            '--major[creates a new version by incrementing the major version]' \
+            '--minor[creates a new version by incrementing the minor version]' \
+            '--patch[creates a new version by incrementing the patch version]' \
+            '--premajor[creates a new prerelease version by incrementing the major version]' \
+            '--preminor[creates a new prerelease version by incrementing the minor version]' \
+            '--prepatch[creates a new prerelease version by incrementing the patch version]' \
+            '--prerelease[increments the prerelease version number keeping the main version]' \
+            '--no-git-tag-version[creates a new version without creating a git tag]' \
+            '--no-commit-hooks[bypasses running commit hooks when committing the new version]'
+          ;;
+        *) # [[[
+          _default
+          ;;
+      esac
+      ;;
+  esac
 
-        _alternative \
-          'dsnippets:-- Downloaded Snippet --:compadd -a - snippets' \
-          'lsnippets:-- Already Loaded Snippet --:compadd -a - snippets_alreadyld' \
-          'plugins:-- Plugin --:compadd -a - plugins' \
-          && ret=0
-        ;;
-      unload|report)
-        typeset -a plugins absolute normal
-        plugins=( "${ZINIT_REGISTERED_PLUGINS[@]:#_local/zinit}" )
-        normal=( "${plugins[@]:#%*}" )
-        absolute=( "${(M)plugins[@]:#%*}" )
-        absolute=( "${absolute[@]/\%\/\//%/}" )
-        local hm="${HOME%/}"
-        absolute=( "${absolute[@]/$hm/HOME}" )
-        plugins=( $normal $absolute )
+  case $state in
+    cache_args) # [[[
+      if [[ $words[1] == "list" ]]; then
+        _arguments \
+          '--pattern=[print out every cached package that matches the pattern]:pattern:'
+      fi
+      ;;
+    config_args) # [[[
+      case $words[1] in
+        get|delete) # [[[
+          _arguments \
+            '1:key:'
+          ;;
+        set) # [[[
+          _arguments \
+            '(-g --global)'{-g,--global} \
+            '1:key:' \
+            '2:value:'
+          ;;
+      esac
+      ;;
+    groups_args) # [[[
+      local dependency_groups=(devDependencies dependencies optionalDependencies peerDependencies bundledDependencies)
+      _values -s ',' 'groups' $dependency_groups
+      ;;
+    module_args) # [[[
+      case $words[1] in
+        build) # [[[
+          _arguments \
+            '(-c --clean)'{-c,--clean}'[Run make distclean before installing]' \
+            '(-l --link)'{-l,--link}'[Create symlink to Zinit Zsh module]' \
+            ;;
+        info) # [[[
+          _arguments \
+            '1:package:' \
+            '2:tag:'
+          ;;
+        help) # [[[
+          _arguments \
+            '1:package:' \
+            '2:tag:'
+          ;;
+      esac
+      ;;
+    owner_args) # [[[
+      case $words[1] in
+        ls) # [[[
+          _arguments \
+            '1:package:'
+          ;;
+        add|rm) # [[[
+          _arguments \
+            '1:user:' \
+            '2:package:'
+          ;;
+      esac
+      ;;
+    team_args) # [[[
+      case $words[1] in
+        create|destroy|ls) # [[[
+          _arguments \
+            '1:scope\:team:'
+          ;;
+        add|rm) # [[[
+          _arguments \
+            '1:scope\:team:' \
+            '2:user:'
+          ;;
+      esac
+      ;;
+  esac
+}
 
-        _wanted plugins expl "-- Plugin --" \
-          compadd "$@" -a - plugins \
-          && ret=0
-        ;;
-      all-reports)
-        _message "Hit enter to get all reports (for all loaded plugins)" && ret=0
-        ;;
-      loaded|list)
-        _message "Hit enter or give part of plugin name" && ret=0
-        ;;
-      clist|completions)
-        _message "Hit enter to get list of completions" && ret=0
-        ;;
-      cclear)
-        _message "Hit enter to clear stray and improper completions" && ret=0
-        ;;
-      cdisable) # Find enabled completions
-        typeset -a completions
-        completions=( "${ZINIT[COMPLETIONS_DIR]}"/_*(N:t) )
-        completions=( "${completions[@]#_}" )
-        _wanted plugins expl "-- Completion --" \
-          compadd "$@" -a - completions \
-          && ret=0
-        ;;
-      cenable) # find disabled completions
-        typeset -a completions
-        completions=( "${ZINIT[COMPLETIONS_DIR]}"/[^_]*(N:t) )
-        _wanted plugins expl "-- Completion --" \
-          compadd "$@" -a - completions \
-          && ret=0
-        ;;
-      creinstall)
-        # complete only plugins that have any completions
-        # iterate each plugin to check for completions that can be installed
-        typeset -a plugins completions
-        local p c user plugin
-        for p in "${ZINIT[PLUGINS_DIR]}"/*; do
-          completions=( "$p"/**/_[^_.]*~*(*.zwc|*.html|*.txt|*.png|*.jpg|*.jpeg|*.js|*.md|_zsh_highlight*|/zsdoc/*)(DN) )
-          for c in "${completions[@]}"; do
-            p="${p:t}"
-            user="${p%%---*}"
-            plugin="${p#*---}"
-            [[ "$user" = "$plugin" && "${user}---${plugin}" != "$p" ]] && user=""
-            plugins+=( "${user:+$user/}$plugin" )
-            break
-          done
-        done
-        _wanted plugins expl "-- Plugin --" \
-          compadd "$@" -a - plugins \
-          && ret=0
-        ;;
-      cuninstall)
-        # iterate each plugin and check if it has completions that are installed
-        typeset -a plugins completions
-        local p c user plugin cfile bkpfile
-        for p in "${ZINIT[PLUGINS_DIR]}"/*; do
-          completions=( "$p"/**/_[^_.][^.]#(N) )
-          for c in "${completions[@]}"; do
-            cfile="${c:t}"
-            bkpfile="${cfile#_}"
-            # completion installed, either enabled or disabled?
-            if [[ -e "${ZINIT[COMPLETIONS_DIR]}"/"$cfile" || -e "${ZINIT[COMPLETIONS_DIR]}"/"$bkpfile" ]]; then
-              p="${p:t}"
-              user="${p%%---*}"
-              plugin="${p#*---}"
-              [[ "$user" = "$plugin" && "${user}---${plugin}" != "$p" ]] && user=""
-              plugins+=( "${user:+$user/}$plugin" )
-              break
-            fi
-          done
-        done
-        _wanted plugins expl "-- Plugin --" \
-          compadd "$@" -a - plugins \
-          && ret=0
-        ;;
-      compinit)
-        _message "Hit enter to refresh completion system" && ret=0
-        ;;
-      snippet)
-        local -a snippets snippets_alreadyld
-        local sni
+_zinit "$@"
 
-        snippets=( "${ZINIT[SNIPPETS_DIR]}"/**/._zinit(D/:h) )
-        snippets=( ${snippets[@]#${ZINIT[SNIPPETS_DIR]}/} )
-        snippets=( ${snippets[@]/(#b)(http|https|ftp|ftps|scp)--/${match[1]}://} )
-        snippets=( ${snippets[@]/--//} )
-
-        for sni ( ${snippets[@]} ) {
-          if [[ -n ${ZINIT_SNIPPETS[$sni]} ]]; then
-            snippets_alreadyld+=( $sni )
-            snippets=( ${snippets[@]:#$sni} )
-          fi
-        }
-
-        _alternative \
-          'dsnippets:-- Downloaded Snippet --:compadd -a - snippets' \
-          'lsnippets:-- Already Loaded Snippet --:compadd -a - snippets_alreadyld' \
-          'files:-- File --:_files' \
-          && ret=0
-        ;;
-      dstart|dtrace)
-        _message "Hit enter to start tracking this session" && ret=0
-        ;;
-      dstop)
-        _message "Hit enter to stop tracking this session" && ret=0
-        ;;
-      dunload)
-        _message "Hit enter to revert changes recorded between dstart and dstop" && ret=0
-        ;;
-      dreport)
-        _message "Hit enter to show report of what was going on in session" && ret=0
-        ;;
-      dclear)
-        _message "Hit enter to clear report of what was going on in session" && ret=0
-        ;;
-      compile-all)
-        _message 'Hit enter to compile all downloaded plugins' && ret=0
-        ;;
-      uncompile)
-        typeset -a plugins
-        plugins=( "${ZINIT[PLUGINS_DIR]}"/*(N) )
-
-        typeset -a show_plugins p matches
-        for p in "${plugins[@]}"; do
-          matches=( $p/*.zwc(N) )
-          if [ "$#matches" -ne "0" ]; then
-            p="${p:t}"
-            [ "$p" = "_local---zinit" ] && continue
-            [ "$p" = "custom" ] && continue
-            p="${p//---//}"
-            show_plugins+=( "$p" )
-          fi
-        done
-
-        _wanted show_plugins expl "-- Plugin --" \
-          compadd "$@" -a - show_plugins \
-          && ret=0
-        ;;
-      uncompile-all)
-        _message 'Hit enter remove compiled versions of all downloaded plugins' && ret=0
-        ;;
-      compiled)
-        _message 'Hit enter to get list of compiled plugins' && ret=0
-        ;;
-      cdlist)
-        _message 'Hit enter to show compdef replay list' && ret=0
-        ;;
-      cdreplay)
-        _message 'Hit enter to replay recorded compdefs' && ret=0
-        ;;
-      cdclear)
-        _message 'Hit enter to clear compdef replay list' && ret=0
-        ;;
-      recently)
-        typeset -a timespecs
-        timespecs=(
-          "1 month":"code modified during last month"
-          "1 week":"code modified during last 7 days (default)"
-          "3 days":"code modified during last 3 days"
-        )
-        _describe -t timespecs "Time spec" timespecs && ret=0
-        ;;
-      create)
-        _message 'Plugin spec or just enter, to create new plugin' && ret=0
-        ;;
-      env-whitelist)
-        _wanted plugins expl "-- Parameter To White List During Any Plugin Unload --" _parameters \
-          && ret=0
-        ;;
-      *)
-        ret=1
-        ;;
-    esac
-esac
-
-return $ret
-
-# Local Variables:
-# mode: Shell-Script
-# sh-indentation: 2
-# indent-tabs-mode: nil
-# sh-basic-offset: 2
-# End:
-# vim: ft=zsh sw=2 ts=2 et
+# vim:ft=zsh:sw=2:sts=2:et:

@@ -561,7 +561,6 @@ Has 7 line(s). Doesn't call other functions.
 Called by:
 
  Script-Body
- zinit-autoload.zsh/.zinit-self-update
  zinit-autoload.zsh/.zinit-update-or-status-all
 
 .zinit-get-object-path

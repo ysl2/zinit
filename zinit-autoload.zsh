@@ -735,29 +735,27 @@ ZINIT[EXTENDED_GLOB]=""
             builtin print
         fi
         if [[ $1 != -q ]] {
-            command git pull --no-stat --ff-only origin main
+            command git pull --ff-only --no-stat origin main
         } else {
-            command git pull --no-stat --quiet --ff-only origin main
+            command git pull --ff-only --no-stat --quiet origin main
         }
     )
-    if [[ $1 != -q ]] {
-        +zinit-message "{pre}[self-update]{info} compiling zinit via {obj}zcompile{rst}"
-    }
-    command rm -f $ZINIT[BIN_DIR]/*.zwc(DN)
-    zcompile -U $ZINIT[BIN_DIR]/zinit.zsh
-    zcompile -U $ZINIT[BIN_DIR]/zinit-{'side','install','autoload','additional'}.zsh
-    zcompile -U $ZINIT[BIN_DIR]/share/git-process-output.zsh
-    # Load for the current session
-    [[ $1 != -q ]] && +zinit-message "{pre}[self-update]{info} reloading zinit for the current session{rst}"
 
-    # +zinit-message "{pre}[self-update]{info} resetting zinit repository via{rst}: {cmd}${ICE[reset]:-git reset --hard HEAD}{rst}"
-    source $ZINIT[BIN_DIR]/zinit.zsh
-    zcompile -U $ZINIT[BIN_DIR]/zinit-{'side','install','autoload'}.zsh
-    # Read and remember the new modification timestamps
+    command rm -f $ZINIT[BIN_DIR]/*.zwc(DN)
     local file
-    for file ( "" -side -install -autoload ) {
-        .zinit-get-mtime-into "${ZINIT[BIN_DIR]}/zinit$file.zsh" "ZINIT[mtime$file]"
-    }
+    local -a zinit_src=( $ZINIT[BIN_DIR]/**/*.zsh(.N) )
+    [[ $1 != -q ]] && +zinit-message "{pre}[self-update]{info} compiling zinit via {obj}zcompile{rst}"
+    [[ $1 != -q ]] && +zinit-message "{pre}[self-update]{info} compiled $zinit_src{rst}"
+    [[ $1 != -q ]] && +zinit-message "{pre}[self-update]{info} reloading zinit for the current session{rst}"
+    for file in $zinit_src; do zcompile -U $file && +zinit-message "{pre}[self-update]{info} compiled $file{rst}"
+; done
+    [[ $1 != -q ]] && +zinit-message "{pre}[self-update]{info} compiled {obj}$zinit_src{rst}"
+
+    [[ $1 != -q ]] && +zinit-message "{pre}[self-update]{info} reloading zinit for the current session{rst}"
+    source $ZINIT[BIN_DIR]/zinit.zsh
+
+    # Store modification timestamps
+    # for file in $ZINIT[BIN_DIR]/zinit*.zsh(.N); do .zinit-get-mtime-into ${file} "ZINIT[mtime$(basename ${file})]"; done
 } # ]]]
 # FUNCTION: .zinit-show-registered-plugins [[[
 # Lists loaded plugins (subcommands list, lodaded)
@@ -1801,11 +1799,8 @@ ZINIT[EXTENDED_GLOB]=""
     }
 
     # Reload Zinit?
-    if [[ $2 != restart ]] && (( ZINIT[mtime] + ZINIT[mtime-side] +
-        ZINIT[mtime-install] + ZINIT[mtime-autoload] != sum
-    )) {
-        +zinit-message "{msg2}Detected Zinit update in another session -" \
-            "{pre}reloading Zinit{msg2}{…}{rst}"
+    if [[ $2 != restart ]] && (( ZINIT[mtime] + ZINIT[mtime-side] + ZINIT[mtime-install] + ZINIT[mtime-autoload] != sum )) {
+        +zinit-message "{msg2}Detected Zinit update in another session - {pre}reloading Zinit{msg2}{…}{rst}"
         source $ZINIT[BIN_DIR]/zinit.zsh
         source $ZINIT[BIN_DIR]/zinit-side.zsh
         source $ZINIT[BIN_DIR]/zinit-install.zsh
@@ -1864,11 +1859,9 @@ ZINIT[EXTENDED_GLOB]=""
     }
 
     if [[ $st = status ]]; then
-        (( !OPTS[opt_-q,--quiet] )) && \
-            +zinit-message "{info}Note:{rst} status done also for unloaded plugins"
+        (( !OPTS[opt_-q,--quiet] )) && +zinit-message "{info}[INFO]{rst} status done also for unloaded plugins"
     else
-        (( !OPTS[opt_-q,--quiet] )) && \
-            +zinit-message "{info}Note:{rst} updating also unloaded plugins"
+        (( !OPTS[opt_-q,--quiet] )) && +zinit-message "{info}[INFO]{rst} updating also unloaded plugins"
     fi
 
     ZINIT[first-plugin-mark]=init
@@ -1887,9 +1880,9 @@ ZINIT[EXTENDED_GLOB]=""
             config=( ${(f)"$(<$repo/.git/config)"} )
             if [[ ${#${(M)config[@]:#\[remote[[:blank:]]*\]}} -eq 0 ]]; then
                 if (( !OPTS[opt_-q,--quiet] )) {
-                    [[ $pd = _local---* ]] && \
-                        builtin print -- "\nSkipping local plugin $REPLY" || \
-                        builtin print "\n$REPLY doesn't have a remote set, will not fetch"
+                    [[ $pd = _local---* ]] \
+                      && builtin print -- "\nSkipping local plugin $REPLY" \
+                      || builtin print "\n$REPLY doesn't have a remote set, will not fetch"
                 }
                 continue
             fi
@@ -1923,7 +1916,6 @@ ZINIT[EXTENDED_GLOB]=""
     if (( !OPTS[opt_-q,--quiet] )) {
         +zinit-message "{msg2}The update took {obj}${SECONDS}{msg2} seconds{rst}"
     }
-
     return "$retval"
 } # ]]]
 # FUNCTION: .zinit-update-all-parallel [[[
@@ -2022,8 +2014,8 @@ ZINIT[EXTENDED_GLOB]=""
 
         }
     }
-    # Shouldn't happen
-    # (( ${#PUAssocArray} > 0 )) && wait ${(k)PUAssocArray}
+  # Shouldn't happen
+  # (( ${#PUAssocArray} > 0 )) && wait ${(k)PUAssocArray}
 } # ]]]
 # FUNCTION: .zinit-wait-for-update-jobs [[[
 .zinit-wait-for-update-jobs() {
@@ -2315,9 +2307,7 @@ ZINIT[EXTENDED_GLOB]=""
     .zinit-any-to-user-plugin "$1" "$2"
     local user="${reply[-2]}" plugin="${reply[-1]}" silent="$3"
 
-    # There are plugins having ".plugin.zsh"
-    # in ${plugin} directory name, also some
-    # have ".zsh" there
+    # There are plugins having ".plugin.zsh" in ${plugin} directory name, also some have ".zsh" there
     [[ "$user" = "%" ]] && local pdir_path="$plugin" || local pdir_path="${ZINIT[PLUGINS_DIR]}/${user:+${user}---}${plugin//\//---}"
     typeset -a matches m
     matches=( $pdir_path/*.zwc(DN) )

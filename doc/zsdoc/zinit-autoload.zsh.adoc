@@ -994,11 +994,10 @@ ____
  Updates Zinit code (does a git pull)
 ____
 
-Has 42 line(s). Calls functions:
+Has 41 line(s). Calls functions:
 
  .zinit-self-update
- |-- zinit.zsh/+zinit-message
- `-- zinit.zsh/.zinit-get-mtime-into
+ `-- zinit.zsh/+zinit-message
 
 Uses feature(s): _setopt_, _source_, _zcompile_
 
@@ -1352,7 +1351,7 @@ ____
  User-action entry point.
 ____
 
-Has 133 line(s). Calls functions:
+Has 127 line(s). Calls functions:
 
  .zinit-update-or-status-all
  |-- zinit-install.zsh/.zinit-compinit

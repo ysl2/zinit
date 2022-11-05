@@ -9,8 +9,11 @@ DOC_SRC := $(foreach wrd,$(SRC),../$(wrd))
 clean:
 	rm -rvf *.zwc doc/zsdoc/zinit{'','-additional','-autoload','-install','-side'}.zsh.adoc doc/zsdoc/data/
 
-container:
-	docker build --tag=ghcr.io/zdharma-continuum/zinit:latest --file=docker/Dockerfile .
+build:
+	docker build --tag=ghcr.io/zdharma-continuum/zinit:latest .
+
+shell:
+	docker run -it ghcr.io/zdharma-continuum/zinit
 
 doc: clean
 	cd doc; zsh -l -d -f -i -c "zsd -v --scomm --cignore '(\#*FUNCTION:[[:space:]][\:\∞\.\+\@\-a-zA-Z0-9]*[\[]*|}[[:space:]]\#[[:space:]][\]]*)' $(DOC_SRC)"
@@ -19,7 +22,7 @@ doc/container: container
 	./scripts/docker-run.sh --docs --debug
 
 # Run ctags to generate Emacs and Vim's format tag file.
-tags: tags/emacs tags/vim
+tags: tags-emacs tags-vim
 
 tags/emacs: ## Build Emacs-style ctags file
 	@if type ctags >/dev/null 2>&1; then \

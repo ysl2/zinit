@@ -9,10 +9,46 @@
 # For development reload the function after making changes
 # unfunction _vagrant && autoload -U _vagrant 
 
+# zinit_plugins() {
+# 	_wanted plugins expl 'plugins' compadd $plugins
+# }
+__plugin_and_snippet_list() {
+  local -a loaded_snippet snippets unloaded_snippet
+  typeset -a all_plugin
+  local snip
 
+  all_plugin=( "${ZINIT[PLUGINS_DIR]}"/*(N:t) )
+  all_plugin=( "${plugins[@]//---//}" )
+  all_plugin=( "${plugins[@]:#_local/zinit}" )
+  all_plugin=( "${plugins[@]:#custom}" )
+
+  # snippets=( "${ZINIT[SNIPPETS_DIR]}"/**/._zinit(D/:h) )
+  # snippets=( ${snippets[@]#${ZINIT[SNIPPETS_DIR]}/} )
+  # snippets=( ${snippets[@]/(#b)(http|https|ftp|ftps|scp)--/${match[1]}://} )
+  # snippets=( ${snippets[@]/--//} )
+
+  # for snip ( ${snippets[@]} ) {
+  #   if [[ -n ${ZINIT_SNIPPETS[$snip]} ]]; then
+  #     loaded_snippet+=( $snip )
+  #     unloaded_snippet=( ${snippets[@]:#$snip} )
+  #   fi
+  # }
+
+  _wanted version expl 'version' compadd $all_plugin
+   #   "unloaded_snippet:unloaded snippet:($unloaded_snippet)" \
+   #   "loaded_snippet:loaded snippet:($loaded_snippet)" \
+   # _alternative \
+   #   "unloaded_snippet:unloaded snippet:($unloaded_snippet)" \
+   #   "loaded_snippet:loaded snippet:($loaded_snippet)" \
+   #   "all_plugin:installed plugin:($all_plugin)"
+  # _wanted plugins expl 'plugins' compadd $all_plugin
+}
+# 	# _wanted version expl 'version' compadd $snippets_alreadyld
+
+# }
 __box_list ()
 {
-    _wanted application expl 'command' compadd $(command vagrant box list | awk '{print $1}' )
+  _wanted plugins expl 'plugins' compadd $plugins
 }
 
 
@@ -269,7 +305,7 @@ function _zinit () {
         times)
           _arguments -s -S : $times_arguments ;;
         update)
-          _arguments -s -S : $update_arguments ;;
+          _arguments -s -S : $update_arguments ':plugin and snippet:__plugin_and_snippet_list' ;;
       esac
     ;;
   esac

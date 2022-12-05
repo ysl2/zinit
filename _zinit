@@ -12,40 +12,28 @@
 # zinit_plugins() {
 # 	_wanted plugins expl 'plugins' compadd $plugins
 # }
-__plugin_and_snippet_list() {
-  local -a loaded_snippet snippets unloaded_snippet
-  typeset -a all_plugin
-  local snip
+__snippet_list() {
+  local -a snippets snippets_alreadyld
+  local sni
 
-  all_plugin=( "${ZINIT[PLUGINS_DIR]}"/*(N:t) )
-  all_plugin=( "${plugins[@]//---//}" )
-  all_plugin=( "${plugins[@]:#_local/zinit}" )
-  all_plugin=( "${plugins[@]:#custom}" )
+  snippets=( "${ZINIT[SNIPPETS_DIR]}"/**/._zinit(D/:h) )
+  snippets=( ${snippets[@]#${ZINIT[SNIPPETS_DIR]}/} )
+  snippets=( ${snippets[@]/(#b)(http|https|ftp|ftps|scp)--/${match[1]}://} )
+  snippets=( ${snippets[@]/--//} )
 
-  # snippets=( "${ZINIT[SNIPPETS_DIR]}"/**/._zinit(D/:h) )
-  # snippets=( ${snippets[@]#${ZINIT[SNIPPETS_DIR]}/} )
-  # snippets=( ${snippets[@]/(#b)(http|https|ftp|ftps|scp)--/${match[1]}://} )
-  # snippets=( ${snippets[@]/--//} )
-
-  # for snip ( ${snippets[@]} ) {
-  #   if [[ -n ${ZINIT_SNIPPETS[$snip]} ]]; then
-  #     loaded_snippet+=( $snip )
-  #     unloaded_snippet=( ${snippets[@]:#$snip} )
-  #   fi
-  # }
-
-  _wanted version expl 'version' compadd $all_plugin
-   #   "unloaded_snippet:unloaded snippet:($unloaded_snippet)" \
-   #   "loaded_snippet:loaded snippet:($loaded_snippet)" \
-   # _alternative \
-   #   "unloaded_snippet:unloaded snippet:($unloaded_snippet)" \
-   #   "loaded_snippet:loaded snippet:($loaded_snippet)" \
-   #   "all_plugin:installed plugin:($all_plugin)"
-  # _wanted plugins expl 'plugins' compadd $all_plugin
+  for sni ( ${snippets[@]} ) {
+    if [[ -n ${ZINIT_SNIPPETS[$sni]} ]]; then
+      snippets_alreadyld+=( $sni )
+      snippets=( ${snippets[@]:#$sni} )
+    fi
+  }
+  _description snippets expl 'timeout (seconds) (0-60) [20]'
+  _alternative \
+    'snippets:-- Downloaded Snippet --:compadd -a - snippets' \
+    'lsnippets:-- Already Loaded Snippet --:compadd -a - snippets_alreadyld' \
+    && ret=0
 }
-# 	# _wanted version expl 'version' compadd $snippets_alreadyld
 
-# }
 __box_list ()
 {
   _wanted plugins expl 'plugins' compadd $plugins
@@ -54,7 +42,13 @@ __box_list ()
 
 __plugin_list ()
 {
-    _wanted application expl 'command' compadd $(command vagrant plugin list | awk '{print $1}')
+  local -a all_plugin
+  all_plugin=( "${ZINIT[PLUGINS_DIR]}"/*(N:t) )
+  all_plugin=( "${all_plugin[@]//---//}" )
+  all_plugin=( "${all_plugin[@]:#_local/zinit}" )
+  all_plugin=( "${all_plugin[@]:#custom}" )
+  _describe -t all_plugin "times" all_plugin && ret=0
+  _wanted all_plugin expl '-- plugins --' compadd $all_plugin
 }
 
 
@@ -119,6 +113,9 @@ function _zinit () {
     'versions:display version information of zinit and related tools.'
     'zstatus:zinit status.'
   )
+    local -a fpath_arguments && fpath_arguments=(
+      {-f,--front}'[show this help message]'
+    )
     local -a bindkeys_arguments && bindkeys_arguments=(
     '--(no-)parallel=[Enable or disable parallelism if provider supports it (automatically enables force)]'
     )
@@ -132,62 +129,32 @@ function _zinit () {
     '--(no-)parallel=[Enable or disable parallelism if provider supports it (automatically enables force)]'
     )
     local -a cdclear_arguments && cdclear_arguments=(
-    '--(no-)parallel=[Enable or disable parallelism if provider supports it (automatically enables force)]'
+      {-h,--help}'[show this help message]'
+      {-q,--quiet}'[turn off almost-all messages from the update operation for the objects with no new version available]'
     )
-    local -a cdisable_arguments && cdisable_arguments=(
-    '--(no-)parallel=[Enable or disable parallelism if provider supports it (automatically enables force)]'
-    )
-    local -a cdlist_arguments && cdlist_arguments=(
-    '--(no-)parallel=[Enable or disable parallelism if provider supports it (automatically enables force)]'
-    )
-    local -a cdreplay_arguments && cdreplay_arguments=(
-    '--(no-)parallel=[Enable or disable parallelism if provider supports it (automatically enables force)]'
-    )
-    local -a cenable_arguments && cenable_arguments=(
-    '--(no-)parallel=[Enable or disable parallelism if provider supports it (automatically enables force)]'
-    )
+    local -a cdisable_arguments && cdisable_arguments=()
+    local -a cdreplay_arguments && cdreplay_arguments=()
+    local -a cenable_arguments && cenable_arguments=()
     local -a changes_arguments && changes_arguments=(
     '--(no-)parallel=[Enable or disable parallelism if provider supports it (automatically enables force)]'
     )
-    local -a clist_arguments && clist_arguments=(
-    '--(no-)parallel=[Enable or disable parallelism if provider supports it (automatically enables force)]'
-    )
+    local -a clist_arguments && clist_arguments=()
     local -a compile_arguments && compile_arguments=(
-    '--(no-)parallel=[Enable or disable parallelism if provider supports it (automatically enables force)]'
+      {-a,--all}'[update all plugins and snippets]'
     )
-    local -a compiled_arguments && compiled_arguments=(
-    '--(no-)parallel=[Enable or disable parallelism if provider supports it (automatically enables force)]'
+    local -a compiled_arguments && compiled_arguments=()
+    local -a compinit_arguments && compinit_arguments=()
+    local -a completions_arguments && completions_arguments=()
+    local -a config_arguments && config_arguments=()
+    local -a create_arguments && create_arguments=()
+    local -a creinstall_arguments && creinstall_arguments=()
+    local -a csearch_arguments && csearch_arguments=()
+    local -a cuninstall_arguments && cuninstall_arguments=()
+    local -a dclear_arguments && dclear_arguments=()
+    local -a delete_arguments && delete_arguments=(
+      {-a,--all}'[update all plugins and snippets]'
+      {-c,--clean}'[delete plugins and snippets that are not loaded]'
     )
-    local -a compinit_arguments && compinit_arguments=(
-    '--(no-)parallel=[Enable or disable parallelism if provider supports it (automatically enables force)]'
-    )
-    local -a completions_arguments && completions_arguments=(
-    '--(no-)parallel=[Enable or disable parallelism if provider supports it (automatically enables force)]'
-    )
-    local -a config_arguments && config_arguments=(
-    '--(no-)parallel=[Enable or disable parallelism if provider supports it (automatically enables force)]'
-    )
-    local -a create_arguments && create_arguments=(
-    '--(no-)parallel=[Enable or disable parallelism if provider supports it (automatically enables force)]'
-    )
-    local -a creinstall_arguments && creinstall_arguments=(
-    '--(no-)parallel=[Enable or disable parallelism if provider supports it (automatically enables force)]'
-    )
-    local -a csearch_arguments && csearch_arguments=(
-    '--(no-)parallel=[Enable or disable parallelism if provider supports it (automatically enables force)]'
-    )
-    local -a cuninstall_arguments && cuninstall_arguments=(
-    '--(no-)parallel=[Enable or disable parallelism if provider supports it (automatically enables force)]'
-    )
-    # local -a dclear_arguments && dclear_arguments=(
-
-    # )
-    # local -a delete_arguments && delete_arguments=(
-
-    # )
-    # local -a doctor_arguments && doctor_arguments=(
-
-    # )
     # local -a dreport_arguments && dreport_arguments=(
 
     # )
@@ -209,9 +176,6 @@ function _zinit () {
     # local -a glance_arguments && glance_arguments=(
 
     # )
-    # local -a help_arguments && help_arguments=(
-
-    # )
     # local -a info_arguments && info_arguments=(
 
     # )
@@ -231,9 +195,6 @@ function _zinit () {
 
     # )
     # local -a man_arguments && man_arguments=(
-
-    # )
-    # local -a module_arguments && module_arguments=(
 
     # )
     # local -a recall_arguments && recall_arguments=(
@@ -267,9 +228,9 @@ function _zinit () {
 
     # )
     local -a times_arguments && times_arguments=(
-      {-s,--seconds}'[Display time in seconds.]'
-      {-m,--moments}'[Display ada]'
-      {-a,--all}'[asdasd]'
+      {-h,--help}'[Show this help message]'
+      {-m,--moments}'[Show the *moments* of object (i.e.: a plugin or snippet) loading time]'
+      {-s,--seconds}'[Show times in seconds instead of milliseconds]'
     )
     # local -a uncompile_arguments && uncompile_arguments=(
 
@@ -281,7 +242,17 @@ function _zinit () {
 
     # )
     local -a update_arguments && update_arguments=(
-      {-a,--all}'[asdasd]'
+      {-a,--all}'[update all plugins and snippets]'
+      {-h,--help}'[show this help message]'
+      {-n,--no-pager}'[disable the use of the pager]'
+      {-p,--parallel}'[turn on concurrent, multi-thread update]'
+      {-q,--quiet}'[turn off almost-all messages from the update operation for the objects with no new version available]'
+      {-r,--reset}'[reset the repository before updating (or remove the files for single-file snippets and gh-r plugins)]'
+      {-s,--snippets}'[only update snippets]'
+      {-u,--urge}'[pause all ice hooks (i.e., atpull, cp, etc.) to execute even when no new commits / any new version of the gh-r file / etc.… available for download↔ simulate a non-empty update]'
+      {-v,--verbose}'[turn on more messages from the operation]'
+      ':: :__plugin_list'
+      ':: :__snippet_list'
     )
     # local -a versions_arguments && versions_arguments=(
 
@@ -300,12 +271,14 @@ function _zinit () {
 
     (options)
       case $line[1] in
+        delete)
+          _arguments -s -S : $delete_arguments ;;
         module)
           __zinit-module ;;
         times)
           _arguments -s -S : $times_arguments ;;
         update)
-          _arguments -s -S : $update_arguments ':plugin and snippet:__plugin_and_snippet_list' ;;
+          _arguments -s -S : $update_arguments ;;
       esac
     ;;
   esac

@@ -2063,74 +2063,64 @@ zimv() {
 # FUNCTION: .zinit-configure-run-autoconf [[[
 # Called if # passed to configure ice or no ./configure found
 # Runs autoconf, autoreconf, and autogen.sh
-.zinit-configure-run-autoconf() {
+.zinit-configure-run-autoconf () {
     local dir=$1 flags=$2
     integer q
-    local msg="{pre} ({flag}#{pre} flag given){…}" msg_="{pre}{…}"
-    # Custom script
-    if [[ -f $dir/autogen.sh ]]; then
+    local msg="(# flag given)" msg_=""
+    if [[ -f $dir/autogen.sh ]]
+    then
         q=1
-        m {pre}Running {cmd}./autogen.sh${${${(M)flags:#*\#*}:+$msg}:-$msg_}
-        .zinit-countdown ./autogen.sh && \
-            (
-                cd -q $dir
-                chmod +x ./autogen.sh
-                ./autogen.sh
-            )
-    # Autoreconf only if available in PATH
-    elif [[ -f $dir/configure && -f $dir/configure.ac && \
-            $+commands[autoreconf] = 1 ]]; then
+        +zinit-message "{pre}==>{rst} ./autogen.sh${${${(M)flags:#*\#*}:+$msg}:-$msg_}"
+        .zinit-countdown ./autogen.sh && (
+            cd -q $dir
+            chmod +x ./autogen.sh
+            ./autogen.sh
+        )
+    elif [[ -f $dir/configure && -f $dir/configure.ac ]] && (( ${+commands[autoreconf]} ))
+    then
         q=1
-        m {pre}Running {cmd}autoreconf {opt}-f${${${(M)flags:#*\#*}:+$msg}:-$msg_}
-        .zinit-countdown autoreconf\ -f\ -i\ … && \
-            (
-                cd -q $dir
-                rm -f aclocal.m4
-                aclocal -I m4 --force
-                libtoolize --copy --force
-                autoreconf -f -i -I m4
-            )
-    # Manual reproduction of autoreconf run
-    elif [[ -f $dir/configure && -f $dir/configure.ac ]]; then
+        +zinit-message "{pre}==>{rst} autoreconf {opt}-f${${${(M)flags:#*\#*}:+$msg}:-$msg_}"
+        .zinit-countdown autoreconf\ -f\ -i\ … && (
+            cd -q $dir
+            rm -f aclocal.m4
+            aclocal -I m4 --force
+            libtoolize --copy --force
+            autoreconf -f -i -I m4
+        )
+    elif [[ -f $dir/configure && -f $dir/configure.ac ]]
+    then
         q=1
-        m {pre}Running {cmd}aclocal{pre}, {cmd}autoconf{pre} and {cmd}automake\
-${${${(M)flags:#*\#*}:+$msg}:-$msg_}
-        .zinit-countdown aclocal,\ autoconf,\ automake && \
-            (
-                cd -q $dir
-                rm -f aclocal.m4
-                aclocal -I m4 --force
-                libtoolize --copy --force
-                aclocal -I m4 --force
-                autoconf -I m4 -f
-                autoheader -I m4 -f
-                automake --add-missing -c --force-missing
-            )
-    # Only autoconf if no existing ./configure
-    elif [[ ! -f $dir/configure && -f $dir/configure.ac ]]; then
+        +zinit-message "{pre}==>{rst} aclocal, autoconf, and automake ${${${(M)flags:#*\#*}:+$msg}:-$msg_}"
+        .zinit-countdown aclocal,\ autoconf,\ automake && (
+            cd -q $dir
+            rm -f aclocal.m4
+            aclocal -I m4 --force
+            libtoolize --copy --force
+            aclocal -I m4 --force
+            autoconf -I m4 -f
+            autoheader -I m4 -f
+            automake --add-missing -c --force-missing
+        )
+    elif [[ ! -f $dir/configure && -f $dir/configure.ac ]]
+    then
         q=1
-        m {pre}Running {cmd}autoconf {opt}-f${${${(M)flags:#*\#*}:+$msg}:-$msg_}
-        .zinit-countdown autoconf\ -f && \
-            (
-                cd -q $dir
-                autoconf -f -I m4
-            )
-    elif [[ $flags == *\#* ]]; then
-        m {ehi}WARNING:{error}: No {cmd}autogen.sh{error} nor {file}configure.ac \
-            {error}on disk while the {flag}\# \
-            {error}flag given to the {ice}configure{apo}\'\'{error} ice, skipping \
-            further {cmd}./configure{error}-generation related actions{…}
+        +zinit-message "{pre}==>{rst} autoconf {opt}-f${${${(M)flags:#*\#*}:+$msg}:-$msg_}"
+        .zinit-countdown autoconf\ -f && (
+            cd -q $dir
+            autoupdate
+            autoconf -f -I m4
+        )
+    elif [[ $flags == *\#* ]]
+    then
+        +zinit-message "{error}Error:{rst} No {cmd}autogen.sh{rst} or {file}configure.ac{rst} on disk while the" "{flag}\#{rst} flag given to the {ice}configure{apo}\'\'{error} ice" "skipping further {cmd}./configure{rst}-generation related actions"
         ((1))
     fi
-    if [[ ! -f $dir/configure ]]; then
-        if (( q )); then
-            m {error}WARNING:some input files existed \({file}configure.ac{error}, \
-                etc.\) however running {cmd}Autotools{error} didn\'t yield a \
-                {cmd}./configure{error} script, meaning that it won\'t be run\! \
-                Please check if you have packages such as {pkg}autoconf{error}, \
-                {pkg}autmake{error} and similar installed.
+    if [[ ! -f $dir/configure ]]
+    then
+        if (( q ))
+        then
+            +zinit-message "{error}Error:{rst} Various input files existed \({file}configure.ac{error}," "etc.\) however running {cmd}Autotools{error} did not create a {cmd}./configure{error} script, skipping!" "Please check if you have packages such as {pkg}autoconf{error}, {pkg}autmake{error} and similar installed"
         else
-            # No output – lacking both configure.ac and configure → a no-op
             :
         fi
     fi

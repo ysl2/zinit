@@ -2227,91 +2227,72 @@ zimv() {
 # FUNCTION: ∞zinit-configure-base-hook [[[
 # A base common implementation of configure'', as all
 # the starting steps are rigid and the same in all
-# hooks, hence the idea. TODO: use in make'' and other
-# places.
-∞zinit-configure-base-hook() {
-    [[ "$1" = plugin ]] && \
-        local dir="${5#%}" hook="$6" subtype="$7" ex="$8" || \
-        local dir="${4#%}" hook="$5" subtype="$6" ex="$7"
-
+# hooks, hence the idea.
+∞zinit-configure-base-hook () {
+    [[ "$1" = plugin ]] && local dir="${5#%}" hook="$6" subtype="$7" ex="$8"  || local dir="${4#%}" hook="$5" subtype="$6" ex="$7"
     emulate -L zsh -o extendedglob
-
     local configure=${ICE[configure]}
     @zinit-substitute configure
-
-    # c-cmake, s-scons, m-meson, 0-default (configure)
     local flags=${(M)configure##[smc0\!\#]##}
     configure=${configure##$flags([[:space:]]##|(#e))}
     (( ${+ICE[configure]} )) || return 0
-    # !-only flags
     local eflags=${(SM)flags##[\!]##} aflags=${(SM)flags##[smc0]##}
     [[ $eflags == $ex ]] || return 0
-
-    # Conditionally run autogen.sh/autoconf/aclocal/etc. to
-    # see if we got an output ./configure file (or preexisting
-    # if no autotools have been resolved to run from the optional
-    # # flag and the .ac/.m4 input files) ready to run
-    [[ $flags == *\#* || ! -f $dir/configure ]] &&
-        .zinit-configure-run-autoconf "$dir" $flags
-
-    if [[ $flags == (#b)*([^smc0\!\#]##)* || ${flags//[\!\#]##/} == (#b)(([smc0](#c2,))) ]]; then
-        m {error}ERROR: improper ${match[2]:+\(multiple of s,m,c\?\)} flag\(s\) \({flag}${match[1]}{error}\) \
-            given, skipping further build system actions processing{…}
+    [[ $flags == *\#* || ! -f $dir/configure ]] && .zinit-configure-run-autoconf "$dir" $flags
+    if [[ $flags == (#b)*([^smc0\!\#]##)* || ${flags//[\!\#]##/} == (#b)(([smc0](#c2,))) ]]
+    then
+        +zinit-message "{error}Error:{rst} improper ${match[2]:+\(multiple of s,m,c\?\)} flag\(s\) \({flag}${match[1]}{rst}\) given, skipping further build system actions processing"
         return 1
     fi
-
-    local -a files=( $dir/CMakeLists.txt(N) $dir/*/CMakeLists.txt(N) )
-    if [[ $#files -gt 0 && -z $aflags || $flags == [^a-z0]#c[^a-z0]# ]]; then
-        if (( ${+commands[cmake]} )); then
+    local -a files=($dir/CMakeLists.txt(N) $dir/*/CMakeLists.txt(N))
+    if [[ ( $#files -gt 0 && -z $aflags ) || $flags == [^a-z0]#c[^a-z0]# ]]
+    then
+        if (( ${+commands[cmake]} ))
+        then
             command mkdir -p $dir/_build-zinit
-            m {pre}Running {cmd}cmake{pre} ${${${${#files}:#0}:+for \
-            its found {file}CMakeLists.txt{pre} input file{…}}:-\
-because {flag}c{pre} flag given}
-           .zinit-countdown cmake && \
-             ( cd -q $dir/_build-zinit; cmake -DCMAKE_INSTALL_PREFIX=$ZPFX .. ${(@s; ;)configure} )
-        else
-            m {error}Error: no {cmd}cmake{error} binary found and \
-                ${${${${#files}:#0}:+its input file exists \
-                   ({file}CMakeLists.txt{error})}:-and {flag}c{error} \
-                   flag given}! Skipping{…}
-        fi
-    fi
-    local -a files=( $dir/SConstruct(N) $dir/*/SConstruct(N) )
-    if [[ $#files -gt 0 && -z $aflags || $flags == [^a-z0]#s[^a-z0]# ]]; then
-        if (( ${+commands[scons]} )); then
-            m {pre}Running {cmd}scons{pre} for its found {file}SConstruct{pre} input file{…}
-            .zinit-countdown scons && \
-                 ( cd $dir; scons RELEASE=yes --prefix=$ZPFX ${(@s; ;)configure} )
-        else
-            m {error}Error: no {cmd}scons{error} binary found and \
-                ${${${${#files}:#0}:+its input file exists \
-                    ({file}SConstruct{error})}:-and {flag}s{error} \
-                    flag given}! Skipping{…}
-        fi
-    fi
-    local -a files=( $dir/meson.build(N) $dir/*/meson.build(N) )
-    if [[ $#files -gt 0 && -z $aflags || $flags == [^a-z0]#m[^a-z0]# ]]; then
-        if (( ${+commands[meson]} )); then
-            m {pre}Running {cmd}meson setup{pre} ${${${${#files}:#0}:+\
-for its found {file}meson.build{pre} input file}:-because {flag}m{pre} \
-                flag given}{…}
-            .zinit-countdown meson\ setup && \
-                ( cd $dir; command meson setup --prefix=$ZPFX _build-zinit ${(@s; ;)configure} )
-        else
-            m {error}Error: no {cmd}meson{error} binary found and \
-            ${${${${#files}:#0}:+its input file exists \
-                ({file}meson.build{error})}:-{flag}m{error} \
-                flag given}! Skipping{…}
-        fi
-    fi
-    if [[ -f $dir/configure && -z $aflags || $flags == [^a-z0]#0[^a-z0]# ]]; then
-        m {pre}Running {cmd}./configure {opt}--prefix{meta}={b}{dir}$ZPFX{nb}{…}
-        .zinit-countdown ./configure && \
-            (
-                cd -q $dir
-                chmod +x ./configure
-                ./configure --prefix=$ZPFX ${(@s; ;)configure}
+            +zinit-message "{pre}==>{rst} {cmd}cmake{pre} ${${${${#files}:#0}:+for its found {file}CMakeLists.txt{pre} input file{…}}:- because {flag}c{pre} flag given}"
+            .zinit-countdown cmake && (
+                cd -q $dir/_build-zinit
+                cmake -DCMAKE_INSTALL_PREFIX=${dir} .. ${(@s; ;)configure}
             )
+        else
+            +zinit-message "{error}Error:{rst} No {cmd}Cmake{rst} binary found and ${${${${#files}:#0}:+its input file exists ({file}CMakeLists.txt{rst})}:-and {flag}c{rst} flag given}"
+        fi
+    fi
+    local -a files=($dir/SConstruct(N) $dir/*/SConstruct(N))
+    if [[ ( $#files -gt 0 && -z $aflags ) || $flags == [^a-z0]#s[^a-z0]# ]]
+    then
+        if (( ${+commands[scons]} ))
+        then
+            +zinit-message "{pre}==>{rst} {cmd}scons{rst} for its found {file}SConstruct{rst} input file"
+            .zinit-countdown scons && (
+                cd $dir
+                scons RELEASE=yes --prefix=${dir} ${(@s; ;)configure}
+            )
+        else
+            +zinit-message "{error}Error:{rst} No {cmd}scons{error} binary found and ${${${${#files}:#0}:+its input file exists ({file}SConstruct{error})}:-and {flag}s{error} flag given}"
+        fi
+    fi
+    local -a files=($dir/meson.build(N) $dir/*/meson.build(N))
+    if [[ ( $#files -gt 0 && -z $aflags ) || $flags == [^a-z0]#m[^a-z0]# ]]
+    then
+        if (( ${+commands[meson]} ))
+        then
+            +zinit-message "{pre}==>{rst} meson setup ${${${${#files}:#0}:+ for its found {file}meson.build{pre} input file}:-because {flag}m{pre} flag given}"
+            .zinit-countdown meson\ setup && (
+                cd $dir
+                command meson setup --prefix=${dir} _build-zinit ${(@s; ;)configure}
+            )
+        else
+            +zinit-message "{error}Error:{rst} No {cmd}meson{rst} binary found and ${${${${#files}:#0}:+its input file exists ({file}meson.build{error})}:-{flag}m{error} flag given}"
+        fi
+    fi
+    if [[ ( -f $dir/configure && -z $aflags ) || $flags == [^a-z0]#0[^a-z0]# ]]
+    then
+        +zinit-message "{pre}==>{rst} ./configure --prefix=${dir} --silent"
+        .zinit-countdown ./configure && (
+            cd -q "${dir}" && chmod +x ./configure && ./configure --prefix=${dir} --silent ${(@s; ;)configure}
+        )
     fi
 } # ]]]
 # FUNCTION: ∞zinit-make-ee-hook [[[

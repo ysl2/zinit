@@ -2070,7 +2070,7 @@ zimv() {
     if [[ -f $dir/autogen.sh ]]
     then
         q=1
-        +zinit-message "{pre}==>{rst} ./autogen.sh${${${(M)flags:#*\#*}:+$msg}:-$msg_}"
+        +zinit-message "{pre}==>{rst} Running: {cmd}./autogen.sh${${${(M)flags:#*\#*}:+$msg}:-$msg_}{rst}"
         .zinit-countdown ./autogen.sh && (
             cd -q $dir
             chmod +x ./autogen.sh
@@ -2079,7 +2079,7 @@ zimv() {
     elif [[ -f $dir/configure && -f $dir/configure.ac ]] && (( ${+commands[autoreconf]} ))
     then
         q=1
-        +zinit-message "{pre}==>{rst} autoreconf {opt}-f${${${(M)flags:#*\#*}:+$msg}:-$msg_}"
+        +zinit-message "{pre}==>{rst} Running: {cmd}autoreconf -f${${${(M)flags:#*\#*}:+$msg}:-$msg_}{rst}"
         .zinit-countdown autoreconf\ -f\ -i\ … && (
             cd -q $dir
             rm -f aclocal.m4
@@ -2090,7 +2090,7 @@ zimv() {
     elif [[ -f $dir/configure && -f $dir/configure.ac ]]
     then
         q=1
-        +zinit-message "{pre}==>{rst} aclocal, autoconf, and automake ${${${(M)flags:#*\#*}:+$msg}:-$msg_}"
+        +zinit-message "{pre}==>{rst} Running: {cmd}aclocal, autoconf, and automake ${${${(M)flags:#*\#*}:+$msg}:-$msg_}{rst}"
         .zinit-countdown aclocal,\ autoconf,\ automake && (
             cd -q $dir
             rm -f aclocal.m4
@@ -2206,7 +2206,7 @@ zimv() {
             ZINIT[-r/--reset-opt-hook-has-been-run]=1
         }
     } else {
-        # If there's no -r/--reset, pretend that it already has been served.
+        # If there is no -r/--reset, pretend that it already has been served
         ZINIT[-r/--reset-opt-hook-has-been-run]=1
     }
 } # ]]]
@@ -2241,7 +2241,7 @@ zimv() {
     [[ $flags == *\#* || ! -f $dir/configure ]] && .zinit-configure-run-autoconf "$dir" $flags
     if [[ $flags == (#b)*([^smc0\!\#]##)* || ${flags//[\!\#]##/} == (#b)(([smc0](#c2,))) ]]
     then
-        +zinit-message "{error}Error:{rst} improper ${match[2]:+\(multiple of s,m,c\?\)} flag\(s\) \({flag}${match[1]}{rst}\) given, skipping further build system actions processing"
+        +zinit-message "{error}Error:{rst} Invalid ${match[2]:+\(multiple of s,m,c\?\)} flag\(s\) \({flag}${match[1]}{rst}\) given, skipping further build system actions processing"
         return 1
     fi
     local -a files=($dir/CMakeLists.txt(N) $dir/*/CMakeLists.txt(N))
@@ -2250,7 +2250,7 @@ zimv() {
         if (( ${+commands[cmake]} ))
         then
             command mkdir -p $dir/_build-zinit
-            +zinit-message "{pre}==>{rst} {cmd}cmake{pre} ${${${${#files}:#0}:+for its found {file}CMakeLists.txt{pre} input file{…}}:- because {flag}c{pre} flag given}"
+            +zinit-message "{pre}==>{rst} {cmd}cmake{rst} binary found and ${${${${#files}:#0}:+its input file exists ({file}CMakeLists.txt{rst})}:-and {flag}c{rst} flag given}"
             .zinit-countdown cmake && (
                 cd -q $dir/_build-zinit
                 cmake -DCMAKE_INSTALL_PREFIX=${dir} .. ${(@s; ;)configure}
@@ -2278,7 +2278,7 @@ zimv() {
     then
         if (( ${+commands[meson]} ))
         then
-            +zinit-message "{pre}==>{rst} meson setup ${${${${#files}:#0}:+ for its found {file}meson.build{pre} input file}:-because {flag}m{pre} flag given}"
+            +zinit-message "{pre}==>{rst} Meson setup ${${${${#files}:#0}:+ for its found {file}meson.build{pre} input file}:-because {flag}m{pre} flag given}"
             .zinit-countdown meson\ setup && (
                 cd $dir
                 command meson setup --prefix=${dir} _build-zinit ${(@s; ;)configure}
@@ -2289,9 +2289,9 @@ zimv() {
     fi
     if [[ ( -f $dir/configure && -z $aflags ) || $flags == [^a-z0]#0[^a-z0]# ]]
     then
-        +zinit-message "{pre}==>{rst} ./configure --prefix=${dir} --silent"
+        +zinit-message "{pre}==>{rst} ./configure --prefix=${dir} --quiet"
         .zinit-countdown ./configure && (
-            cd -q "${dir}" && chmod +x ./configure && ./configure --prefix=${dir} --silent ${(@s; ;)configure}
+            cd -q "${dir}" && chmod +x ./configure && ./configure --prefix=${dir} --quiet ${(@s; ;)configure}
         )
     fi
 } # ]]]
@@ -2308,43 +2308,31 @@ zimv() {
     ∞zinit-make-base-hook "$@" ""
 } # ]]]
 # FUNCTION: ∞zinit-make-base-hook [[[
-∞zinit-make-base-hook() {
-    [[ "$1" = plugin ]] && \
-        local dir="${5#%}" hook="$6" subtype="$7" ex="$8" || \
-        local dir="${4#%}" hook="$5" subtype="$6" ex="$7"
-
+∞zinit-make-base-hook () {
+    [[ "$1" = plugin ]] && local dir="${5#%}" hook="$6" subtype="$7" ex="$8"  || local dir="${4#%}" hook="$5" subtype="$6" ex="$7"
     local make=${ICE[make]}
     @zinit-substitute make
-
-    # Save preceding ! only
     local eflags=${(M)make##[\!]##}
     make=${make##$eflags}
     (( ${+ICE[make]} )) || return 0
     [[ $ex == $eflags ]] || return 0
-
-    # For meson and cmake
     [[ -d $dir/_build-zinit ]] && dir+=/_build-zinit
-
-    # Run either `make` or `meson compile`
-    if [[ -f $dir/Makefile ]]; then
-        m {pre}Running {apo}\`{cmd}make{opt} ${(@s; ;)make}{apo}\`{pre}{…}
-        .zinit-countdown make &&
-            command make -C "$dir" ${(@s; ;)make}
-    elif [[ -f $dir/build.ninja ]]; then
-        m {pre}Running {apo}\`{cmd}meson{opt} compile{apo}\`{pre}{…}
-        .zinit-countdown meson\ compile &&
-            meson compile -C "$dir"
-        [[ $make == ([[:space:]]|(#s))install([[:space:]]|(#e)) ]] &&
-        {
-            m {pre}Running {apo}\`{cmd}meson{opt} ${(@s; ;)make}{apo}\`{pre}{…}
-            .zinit-countdown meson\ ${(@s; ;)make} &&
-                meson ${(@s; ;)make} -C "$dir"
+    if [[ -f $dir/Makefile ]]
+    then
+        +zinit-message "{pre}==>{rst} Running {cmd}make ${(@s; ;)make}{rst}"
+        .zinit-countdown make && command make make >/dev/null || make -C ${dir}  PREFIX="${dir}" ${(@s; ;)make}
+    elif [[ -f $dir/build.ninja ]]
+    then
+        +zinit-message "{pre}==>{rst} Running {cmd}meson compile{rst}"
+        .zinit-countdown meson\ compile && meson compile -C "${dir}"
+        [[ $make == ([[:space:]]|(#s))install([[:space:]]|(#e)) ]] && {
+            +zinit-message "{pre}==>{rst} Running {cmd}meson ${(@s; ;)make}{rst}"
+            .zinit-countdown meson\ ${(@s; ;)make} && meson -C "${dir}" ${(@s; ;)make} 
         }
     else
-        m {error}ERROR: No {file}Makefile{error} nor {cmd}meson{error} \
-            build dir found, {cmd}make{error}/{cmd}meson{error} isn\'t run\!
+        +zinit-message "{error}Error:{rst} Neither Make or Meson were ran{rst}"
     fi
-} # ]]]
+}
 # FUNCTION: ∞zinit-atclone-hook [[[
 ∞zinit-atclone-hook() {
     [[ "$1" = plugin ]] && \

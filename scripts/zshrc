@@ -1,0 +1,47 @@
+
+# add zpfx/bin and gopath/bin to path
+# typeset -U path
+# path=("${ZPFX:-${HOME}/.local/share/zinit/polaris}/bin" $path)
+
+
+local ZI_DIR="${HOME}/.local/share/zinit"
+typeset -gAH ZINIT
+
+ZINIT+=(
+  COMPLETIONS_DIR "$ZI_DIR/completions" PLUGINS_DIR "$ZI_DIR/plugins"
+  HOME_DIR        "$ZI_DIR"             BIN_DIR     "$ZI_DIR/zinit.git"
+  SNIPPETS_DIR    "$ZI_DIR/snippets"    ZPFX        "$ZI_DIR/polaris"
+  SRC             'zdharma-continuum'   BRANCH      'main'
+  ZCOMPDUMP_PATH "${ZDOTDIR:-$HOME/.config/zsh}/.zcompdump"
+)
+ZSH_CACHE_DIR=$ZINIT[ZCOMPDUMP_PATH]
+
+[[ ! -e $ZINIT[BIN_DIR]/zinit.zsh ]] && {
+  {
+    command git clone \
+      --branch ${ZINIT[BRANCH]:-main} \
+      https://github.com/${ZINIT[FORK]:-${ZINIT[SRC]}}/zinit.git \
+      ${ZINIT[BIN_DIR]}
+    command chmod g-rwX ${ZINIT[HOME_DIR]} && \
+    zcompile "${ZINIT[BIN_DIR]}/zinit.zsh"
+  } || print 'failed to download zinit'
+}
+
+[[ -e ${ZINIT[BIN_DIR]}/zinit.zsh ]] && {
+  builtin source ${ZINIT[BIN_DIR]}/zinit.zsh && \
+  builtin autoload _zinit && \
+  (( ${+_comps} )) && \
+  _comps[zinit]=_zinit
+} || { echo 'failed to find zinit installation' }
+
+zinit light-mode for @${ZINIT[SRC]}/zinit-annex-{binary-symlink,default-ice,linkman,patch-dl,submods}
+zinit for \
+    completions \
+    id-as \
+    lbin'!build/zsd*' \
+    light-mode \
+    lucid \
+    make'PREFIX=${ZI[PLUGINS_DIR]}/zshelldoc --always-make' \
+    null \
+    wait'0a' \
+  @zdharma-continuum/zshelldoc \

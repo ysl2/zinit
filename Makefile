@@ -9,42 +9,56 @@ DOC_SRC := $(foreach wrd,$(SRC),../$(wrd))
 clean:
 	rm -rvf *.zwc doc/zsdoc/zinit{'','-additional','-autoload','-install','-side'}.zsh.adoc doc/zsdoc/data/
 
-container:
-	docker build --tag=ghcr.io/zdharma-continuum/zinit:latest --file=docker/Dockerfile .
+container-build:
+	docker buildx build \
+		--load \
+		--platform linux/amd64 \
+		--progress plain \
+		--pull \
+		--tag ghcr.io/zdharma-continuum/zinit:latest \
+		.
 
+container-run:
+	docker run \
+		--hostname zinit-docker \
+		--interactive \
+		--mount source=zinit-docker-volume,destination=/home \
+		--platform linux/amd64 \
+		--security-opt seccomp=unconfined \
+		--tty \
+		ghcr.io/zdharma-continuum/zinit:latest
+
+# (\#*FUNCTION:[[:space:]][\:\-\.\+\@\-a-zA-Z0-9]*[\[]*|}[[:space:]]\#[[:space:]][\]]*)
 doc: clean
-	cd doc; zsh -l -d -f -i -c "zsd -v --scomm --cignore '(\#*FUNCTION:[[:space:]][\:\∞\.\+\@\-a-zA-Z0-9]*[\[]*|}[[:space:]]\#[[:space:]][\]]*)' $(DOC_SRC)"
+	cd doc; zsh -l -d -f -i -c "zsd -v --scomm --cignore '(\#[[:space:]]FUNCTION:[[:space:]][\_\+\-\.\:\@a-zA-Z0-9]*[[:space:]][\[]*|\#\s[\]]*)' $(DOC_SRC)"
 
 doc/container: container
 	./scripts/docker-run.sh --docs --debug
 
-# Run ctags to generate Emacs and Vim's format tag file.
-tags: tags/emacs tags/vim
+tags: tags/emacs tags/vim  ## Run ctags to generate Emacs and Vim's format tag file.
 
 tags/emacs: ## Build Emacs-style ctags file
 	@if type ctags >/dev/null 2>&1; then \
 		if ctags --version | grep >/dev/null 2>&1 "Universal Ctags"; then \
-			ctags -e -R --options=share/zsh.ctags --languages=zsh \
-			    --pattern-length-limit=250 --maxdepth=1; \
+			ctags --languages zsh --maxdepth 1 --options share/zsh.ctags --pattern-length-limit 250 -R -e; \
 		else \
-			ctags -e -R --languages=sh --langmap=sh:.zsh; \
+			ctags --langmap sh:.zsh --languages sh -R -e; \
 		fi; \
-		printf "Created the Emacs \`TAGS\` file.\\n"; \
+		echo "==> Created Emac 'TAGS' file"; \
 	else \
-	    printf 'Error: Please install a Ctags (e.g.: either the Exuberant or Universal %b' \
-	    'version) utility first.\n'; \
+	    echo "Error: No Ctags version (exuberant or universal) version found"; \
 	fi
 
 tags/vim: ## Build the Vim-style ctags file
 	@if type ctags >/dev/null 2>&1; then \
 		if ctags --version | grep >/dev/null 2>&1 "Universal Ctags"; then \
-			ctags --languages=zsh --maxdepth=1 --options=share/zsh.ctags --pattern-length-limit=250 -R; \
+			ctags --languages zsh --maxdepth 1 --options share/zsh.ctags --pattern-length-limit 250 -R; \
 		else \
-			ctags -R --languages=sh --langmap=sh:.zsh; \
+			ctags --langmap sh:.zsh --languages sh -R; \
 		fi; \
-		printf "Created the Vim's style \`tags\` file.\\n"; \
+		echo "==> Created Vim 'TAGS' file"; \
 	else \
-	    printf 'Error: Please install a ctags first.\n'; \
+	    echo "Error: No Ctags version (exuberant or universal) version found"; \
 	fi
 
 test:

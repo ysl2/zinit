@@ -105,7 +105,7 @@ ____
  $2 - plugin (only when $1 - i.e. user - given)
 ____
 
-Has 87 line(s). Calls functions:
+Has 80 line(s). Calls functions:
 
  .zinit-compile-plugin
  |-- zinit-side.zsh/.zinit-compute-ice
@@ -203,7 +203,7 @@ ____
  This is used to provide a layer of support for Oh-My-Zsh and Prezto.
 ____
 
-Has 377 line(s). Calls functions:
+Has 376 line(s). Calls functions:
 
  .zinit-download-snippet
  |-- zinit-side.zsh/.zinit-store-ices
@@ -278,7 +278,7 @@ ____
  package. Connects to Github releases page.
 ____
 
-Has 52 line(s). Calls functions:
+Has 50 line(s). Calls functions:
 
  .zinit-get-latest-gh-r-url-part
  `-- zinit.zsh/+zinit-message
@@ -341,7 +341,7 @@ ____
  $3 - if 1, then reinstall, otherwise only install completions that are not present
 ____
 
-Has 61 line(s). Calls functions:
+Has 55 line(s). Calls functions:
 
  .zinit-install-completions
  |-- zinit-side.zsh/.zinit-any-colorify-as-uspl2
@@ -452,19 +452,19 @@ ____
  
  $1 - user
  $2 - plugin
+ 
 ____
 
-Has 214 line(s). Calls functions:
+Has 177 line(s). Calls functions:
 
  .zinit-setup-plugin-dir
  |-- ziextract
  |   `-- zinit.zsh/+zinit-message
- |-- zinit-side.zsh/.zinit-any-colorify-as-uspl2
  |-- zinit-side.zsh/.zinit-store-ices
  |-- zinit.zsh/+zinit-message
  `-- zinit.zsh/.zinit-get-object-path
 
-Uses feature(s): _setopt_, _trap_
+Uses feature(s): _setopt_, _trap_, _zmodload_
 
 Called by:
 

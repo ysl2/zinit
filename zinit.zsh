@@ -217,9 +217,9 @@ if [[ -z $SOURCED && ( ${+terminfo} -eq 1 && -n ${terminfo[colors]} ) || ( ${+te
     col-warn    $'\e[38;5;214m'   col-ok      $'\e[38;5;220m'      col-time    $'\e[38;5;220m'
 
     col-log-info $'\e[1m\e[38;5;82m'"==>"$'\e[0m'
-    col-log-msg $'\e[38;5;220m'"==>"$'\e[0m'
-    col-log-err $'\e[1m\e[38;5;204m'"Error: "$'\e[0m'
-    col-log-warn $'\e[1m\e[38;5;214m'"Warning: "$'\e[0m'
+    col-log-msg $'\e[38;5;135m'"==>"$'\e[0m'
+    col-log-err $'\e[1m\e[38;5;204m'"Error:"$'\e[0m'
+    col-log-warn $'\e[1m\e[38;5;214m'"Warning:"$'\e[0m'
 
     col--…   "${${${(M)LANG:#*UTF-8*}:+⋯⋯}:-···}" col-lr "${${${(M)LANG:#*UTF-8*}:+↔}:-"«-»"}"
     col-ndsh "${${${(M)LANG:#*UTF-8*}:+–}:-}"     col-…  "${${${(M)LANG:#*UTF-8*}:+…}:-...}"

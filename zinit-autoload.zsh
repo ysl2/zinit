@@ -714,7 +714,7 @@ ZINIT[EXTENDED_GLOB]=""
     builtin emulate -LR zsh ${=${options[xtrace]:#off}:+-o xtrace}
     setopt extendedglob typesetsilent warncreateglobal
 
-    [[ $1 = -q ]] && +zinit-message "{pre}[self-update]{info} updating zinit repository{msg2}" \
+    [[ $1 = -q ]] && +zinit-message "{i} Uppdating Zinit repository}" \
 
     local nl=$'\n' escape=$'\x1b['
     local current_branch=$(git -C $ZINIT[BIN_DIR] rev-parse --abbrev-ref HEAD)
@@ -722,7 +722,7 @@ ZINIT[EXTENDED_GLOB]=""
     local -a lines
     (
         builtin cd -q "$ZINIT[BIN_DIR]" \
-        && +zinit-message -n "{pre}[self-update]{info} fetching latest changes from {obj}$current_branch{info} branch$nl{rst}" \
+        && +zinit-message -n "{m} Fetching latest changes from {obj}$current_branch{info} branch$nl{rst}" \
         && command git fetch --quiet \
         && lines=( ${(f)"$(command git log --color --date=short --pretty=format:'%Cgreen%cd %h %Creset%s %Cred%d%Creset || %b' ..origin/HEAD)"} )
         if (( ${#lines} > 0 )); then
@@ -747,14 +747,14 @@ ZINIT[EXTENDED_GLOB]=""
         }
     )
     if [[ $1 != -q ]] {
-        +zinit-message "{pre}[self-update]{info} compiling zinit via {obj}zcompile{rst}"
+        +zinit-message "{m} compiling Zinit via {cmd}zcompile{rst}"
     }
     command rm -f $ZINIT[BIN_DIR]/*.zwc(DN)
     zcompile -U $ZINIT[BIN_DIR]/zinit.zsh
     zcompile -U $ZINIT[BIN_DIR]/zinit-{'side','install','autoload','additional'}.zsh
     zcompile -U $ZINIT[BIN_DIR]/share/git-process-output.zsh
     # Load for the current session
-    [[ $1 != -q ]] && +zinit-message "{pre}[self-update]{info} reloading zinit for the current session{rst}"
+    [[ $1 != -q ]] && +zinit-message "{m} Reloading Zinit current session{rst}"
 
     # +zinit-message "{pre}[self-update]{info} resetting zinit repository via{rst}: {cmd}${ICE[reset]:-git reset --hard HEAD}{rst}"
     source $ZINIT[BIN_DIR]/zinit.zsh
@@ -1407,7 +1407,7 @@ ZINIT[EXTENDED_GLOB]=""
     fi
     if [[ $st = status ]]; then
         (
-            builtin cd -q ${ZINIT[PLUGINS_DIR]}/${user:+${user}---}${plugin//\//---}
+            builtin cd -q -- ${ZINIT[PLUGINS_DIR]}/${user:+${user}---}${plugin//\//---}
             command git status
         )
         return $retval
@@ -1434,12 +1434,12 @@ ZINIT[EXTENDED_GLOB]=""
         if [[ ${#${(M)config[@]:#\[remote[[:blank:]]*\]}} -eq 0 ]]; then
             (( !OPTS[opt_-q,--quiet] )) && {
                 .zinit-any-colorify-as-uspl2 "$id_as"
-                [[ $id_as = _local/* ]] && builtin print -r -- "Skipping local plugin $REPLY" || builtin print -r -- "$REPLY doesn't have a remote set, will not fetch"
+                [[ $id_as = _local/* ]] && +zinit-message "{w} Skipping local plugin $REPLY" || +zinit-message "{w} $REPLY doesn't have a remote set, will not fetch"
             }
             return 1
         fi
     fi
-    command rm -f $local_dir/.zinit_lastupd
+    command rm -f -- $local_dir/.zinit_lastupd
     if (( 1 )); then
         if [[ -z ${ice[is_release]} && ${ice[from]} = (gh-r|github-rel|cygwin) ]]; then
             ice[is_release]=true
@@ -1508,14 +1508,25 @@ ZINIT[EXTENDED_GLOB]=""
                 ICE=()
             fi
         fi
-        if [[ -d $local_dir/.git ]] && ( builtin cd -q $local_dir git show-ref --verify --quiet refs/heads/main); then
+        [[ -d $local_dir/.git ]] && (
+            builtin cd -q $local_dir
+            git show-ref --verify --quiet refs/heads/main
+        ) && {
+            local main_branch=master
+        } || {
+            local main_branch=main
+        }
+        if [[ -d $local_dir/.git ]] && (; builtin cd -q $local_dir
+                git show-ref --verify --quiet refs/heads/main
+            )
+        then
             local main_branch=main
         else
             local main_branch=master
         fi
         if (( ! is_release )); then
             (
-                builtin cd -q "$local_dir" || return 1
+                builtin cd -q -- "$local_dir" || return 1
                 integer had_output=0
                 local IFS=$'\n'
                 command git fetch --quiet && command git --no-pager log --color --date=short --pretty=format:'%Cgreen%cd %h %Creset%s%n' ..FETCH_HEAD | while read line
@@ -1528,10 +1539,10 @@ ZINIT[EXTENDED_GLOB]=""
                                 (( ZINIT[first-plugin-mark] )) && {
                                     ZINIT[first-plugin-mark]=0
                                 } || builtin print
-                                +zinit-message "{i} Updating $REPLY"
+                                builtin print "Updating $REPLY"
                             fi
                         }
-                        builtin print $line
+                        builtin print -- $line
                     }
                 done | command tee .zinit_lastupd | .zinit-pager &
                 integer pager_pid=$!
@@ -1556,7 +1567,7 @@ ZINIT[EXTENDED_GLOB]=""
                             (( ZINIT[first-plugin-mark] )) && {
                                 ZINIT[first-plugin-mark]=0
                             } || builtin print
-                            +zinit-message "{i} Updating $REPLY"
+                            builtin print "\rUpdating $REPLY"
                         fi
                     else
                         ZINIT[annex-multi-flag:pull-active]=0
@@ -1571,7 +1582,7 @@ ZINIT[EXTENDED_GLOB]=""
                         hook_rc=$?
                         [[ "$hook_rc" -ne 0 ]] && {
                             retval="$hook_rc"
-                            +zinit-message "{w} ${arr[5]} hook returned with ${hook_rc}"
+                            builtin print -Pr -- "${ZINIT[col-warn]}Warning:%f%b ${ZINIT[col-obj]}${arr[5]}${ZINIT[col-warn]} hook returned with ${ZINIT[col-obj]}${hook_rc}${ZINIT[col-rst]}"
                         }
                     done
                     ICE=()
@@ -1583,7 +1594,7 @@ ZINIT[EXTENDED_GLOB]=""
         fi
         if [[ -d $local_dir/.git ]]; then
             (
-                builtin cd -q "$local_dir"
+                builtin cd -q -- "$local_dir"
                 if (( OPTS[opt_-q,--quiet] )); then
                     command git pull --recurse-submodules ${=ice[pullopts]:---ff-only} origin ${ice[ver]:-$main_branch} &> /dev/null
                 else
@@ -1655,7 +1666,7 @@ ZINIT[EXTENDED_GLOB]=""
         } 2> /dev/null
     fi
     if (( PUPDATE && ZINIT[annex-multi-flag:pull-active] > 0 )); then
-        builtin print ${ZINIT[annex-multi-flag:pull-active]} >| $PUFILE.ind
+        builtin print -- ${ZINIT[annex-multi-flag:pull-active]} >| $PUFILE.ind
     fi
     return $retval
 } # ]]]
@@ -1715,7 +1726,7 @@ ZINIT[EXTENDED_GLOB]=""
     setopt extendedglob nullglob warncreateglobal typesetsilent noshortloops
     local -F2 SECONDS=0
     .zinit-self-update -q
-    [[ $2 = restart ]] && +zinit-message "{msg2}Restarting the update with the new codebase loaded.{rst}"$'\n'
+    [[ $2 = restart ]] && +zinit-message "{i} Restarting the update with the new codebase loaded.{rst}"$'\n'
     local file
     integer sum el update_rc
     for file in "" -side -install -autoload; do
@@ -1723,7 +1734,7 @@ ZINIT[EXTENDED_GLOB]=""
         sum+=el
     done
     if [[ $2 != restart ]] && (( ZINIT[mtime] + ZINIT[mtime-side] + ZINIT[mtime-install] + ZINIT[mtime-autoload] != sum)); then
-        +zinit-message "{msg2}Detected Zinit update in another session -" "{pre}reloading Zinit{msg2}{…}{rst}"
+        +zinit-message "{m} Detected Zinit update in another session -" "{pre}reloading Zinit{msg2}{…}{rst}"
         source $ZINIT[BIN_DIR]/zinit.zsh
         source $ZINIT[BIN_DIR]/zinit-side.zsh
         source $ZINIT[BIN_DIR]/zinit-install.zsh
@@ -1737,13 +1748,13 @@ ZINIT[EXTENDED_GLOB]=""
     fi
     integer retval
     if (( OPTS[opt_-p,--parallel] )) && [[ $1 = update ]]; then
-        (( !OPTS[opt_-q,--quiet] )) && +zinit-message '{info2}Parallel Update Starts Now{…}{rst}'
+        (( !OPTS[opt_-q,--quiet] )) && +zinit-message '{i} Parallel Update Starting'
         .zinit-update-all-parallel
         retval=$?
         .zinit-compinit 1 1 &> /dev/null
         rehash
         if (( !OPTS[opt_-q,--quiet] )); then
-            +zinit-message "{msg2}The update took {obj}${SECONDS}{msg2} seconds{rst}"
+            +zinit-message "Update took {num}${SECONDS}{rst} seconds"
         fi
         return $retval
     fi
@@ -1753,7 +1764,7 @@ ZINIT[EXTENDED_GLOB]=""
     if (( OPTS[opt_-s,--snippets] || !OPTS[opt_-l,--plugins] )); then
         local -a snipps
         snipps=(${ZINIT[SNIPPETS_DIR]}/**/(._zinit|._zplugin)(ND))
-        [[ $st != status && ${OPTS[opt_-q,--quiet]} != 1 && -n $snipps ]] && +zinit-message "{info}Note:{rst} updating also unloaded snippets"
+        [[ $st != status && ${OPTS[opt_-q,--quiet]} != 1 && -n $snipps ]] && +zinit-message "Updating all snippets"
         for snip in ${ZINIT[SNIPPETS_DIR]}/**/(._zinit|._zplugin)/mode(D); do
             [[ ! -f ${snip:h}/url ]] && continue
             [[ -f ${snip:h}/id-as ]] && id_as="$(<${snip:h}/id-as)"  || id_as=
@@ -1789,7 +1800,7 @@ ZINIT[EXTENDED_GLOB]=""
         .zinit-any-to-user-plugin "$pd"
         local user=${reply[-2]} plugin=${reply[-1]}
         if [[ ! -d $repo/.git && ! -f $repo/._zinit/is_release ]]; then
-            (( !OPTS[opt_-q,--quiet] )) && builtin print "$REPLY: not a git repository"
+            (( !OPTS[opt_-q,--quiet] )) && +zinit-message "{e} $REPLY not a Git repository"
             continue
         fi
         if [[ $st = status ]]; then
@@ -1803,14 +1814,14 @@ ZINIT[EXTENDED_GLOB]=""
             .zinit-update-or-status update "$user" "$plugin"
             update_rc=$?
             [[ $update_rc -ne 0 ]] && {
-                +zinit-message "{w} {pid}${user}/${plugin} {warn}update returned {obj}$update_rc"
+                +zinit-message "{w} ${user}/${plugin} update returned {obj}$update_rc"
                 retval=$?
             }
         fi
     done
     .zinit-compinit 1 1 &> /dev/null
     if (( !OPTS[opt_-q,--quiet] )); then
-        +zinit-message "{msg2}The update took {obj}${SECONDS}{msg2} seconds{rst}"
+            +zinit-message "Update took {num}${SECONDS}{rst} seconds"
     fi
     return "$retval"
 } # ]]]

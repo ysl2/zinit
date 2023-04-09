@@ -102,6 +102,29 @@ __zinit_installed_snippets(){
   #
   _wanted snippets expl 'snippets' compadd -a - snippets
 } # ]]]
+# FUNCTION: __zinit_installed_completions [[[
+__zinit_installed_plugin_completions() {
+  typeset -a plugins completions
+  local p c user plugin cfile bkpfile
+  for p in "${ZINIT[PLUGINS_DIR]}"/*; do
+    completions=( "$p"/**/_[^_.][^.]#(N) )
+    for c in "${completions[@]}"; do
+      cfile="${c:t}"
+      bkpfile="${cfile#_}"
+      # completion installed, either enabled or disabled?
+      if [[ -e $ZINIT[COMPLETIONS_DIR]/$cfile || -e ${ZINIT[COMPLETIONS_DIR]}/$bkpfile ]]; then
+        p="${p:t}"
+        user="${p%%---*}"
+        plugin="${p#*---}"
+        [[ "$user" = "$plugin" && "${user}---${plugin}" != "$p" ]] && user=""
+        plugins+=( ${user:+$user/}${plugin} )
+        break
+      fi
+    done
+  done
+  _wanted plugins expl 'installed plugin completion' compadd -a - plugins
+}
+
 # FUNCTION: __zinit_list_aliases [[[
 __zinit_list_aliases(){
   local -a aliases
@@ -189,7 +212,7 @@ _zinit_create(){
 } # ]]]
 # FUNCTION: _zinit_creinstall [[[
 _zinit_creinstall(){
-  _arguments - plugin '1::plugin:__zinit_installed_plugins' && ret=0
+  _arguments - plugin '1::installed:__zinit_installed_plugin_completions' && ret=0
 } # ]]]
 # FUNCTION: _zinit_csearch [[[
 _zinit_csearch(){
@@ -197,7 +220,7 @@ _zinit_csearch(){
 } # ]]]
 # FUNCTION: _zinit_cunistall [[[
 _zinit_cunistall(){
-  _arguments - installed '*::installed:__zinit_installed' && ret=0
+  _arguments - plugin '1::installed:__zinit_installed_plugin_completions' && ret=0
 } # ]]]
 # FUNCTION: _zinit_dclear [[[
 _zinit_dclear(){

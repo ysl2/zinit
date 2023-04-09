@@ -341,9 +341,9 @@ builtin source "${ZINIT[BIN_DIR]}/zinit-side.zsh" || {
     if [[ $tpe != tarball ]] {
         if [[ -z $update ]] {
             .zinit-any-colorify-as-uspl2 "$user" "$plugin"
-            local pid_hl='{pid}' id_msg_part=" (at label{ehi}:{rst} {id-as}$id_as{rst}{…})"
+            local pid_hl='{pid}' id_msg_part="(id: {id-as}$id_as{rst}{…})"
             (( $+ICE[pack] )) && local infix_m="({b}{ice}pack{apo}''{rst}) "
-            +zinit-message "{nl}Downloading $infix_m{pid}$user${user:+/}$plugin{…}${${${id_as:#$user/$plugin}}:+$id_msg_part}"
+            +zinit-message "{m} Downloading $infix_m{pid}$user${user:+/}$plugin{…}${${${id_as:#$user/$plugin}}:+ $id_msg_part}"
         }
 
         local site
@@ -861,15 +861,15 @@ builtin source "${ZINIT[BIN_DIR]}/zinit-side.zsh" || {
         first=${reply[-1]}
         local fname=${first#$pdir_path/}
 
-        +zinit-message -n "{note}Note:{rst} Compiling{ehi}:{rst} {b}{file}$fname{rst}{…}"
+        +zinit-message -n "{m} Compiling {b}{file}$fname{rst}"
         if [[ -z ${ICE[(i)(\!|)(sh|bash|ksh|csh)]} ]] {
             () {
                 builtin emulate -LR zsh -o extendedglob ${=${options[xtrace]:#off}:+-o xtrace}
                 if { ! zcompile -U "$first" } {
-                    +zinit-message "{msg2}Warning:{rst} Compilation failed. Don't worry, the plugin will work also without compilation."
-                    +zinit-message "{msg2}Warning:{rst} Consider submitting an error report to Zinit or to the plugin's author."
+                    +zinit-message "{w} Compilation failed. Don't worry, the plugin will work also without compilation."
+                    +zinit-message "{w} Consider submitting an error report to Zinit or to the plugin's author."
                 } else {
-                    +zinit-message " {ok}OK{rst}."
+                    +zinit-message " {ok}OK{rst}"
                 }
                 # Try to catch possible additional file
                 zcompile -U "${${first%.plugin.zsh}%.zsh-theme}.zsh" 2>/dev/null
@@ -886,7 +886,7 @@ builtin source "${ZINIT[BIN_DIR]}/zinit-side.zsh" || {
             eval "list+=( \$plugin_dir/$~pat(N) )"
         }
         if [[ ${#list} -eq 0 ]] {
-            +zinit-message "{u-warn}Warning{b-warn}:{rst} ice {ice}compile{apo}''{rst} didn't match any files."
+            +zinit-message "{e} The ice {ice}compile{apo}''{rst} didn't match any files."
         } else {
             integer retval
             for first in $list; do
@@ -962,15 +962,14 @@ builtin source "${ZINIT[BIN_DIR]}/zinit-side.zsh" || {
                   ${TMPDIR:-/tmp}/zinit.skipped_comps.$$.lst ${TMPDIR:-/tmp}/zinit.compiled.$$.lst
 
     if [[ ! -d $local_dir/$dirname ]]; then
-        local id_msg_part="{…} (at label{ehi}:{rst} {id-as}$id_as{rst})"
-        [[ $update != -u ]] && +zinit-message "{nl}{info}Setting up snippet:" \
-                                    "{url}$sname{rst}${ICE[id-as]:+$id_msg_part}"
+        local id_msg_part="(id: {id-as}$id_as{rst})"
+        [[ $update != -u ]] && +zinit-message "{i} Setting up snippet $sname ${ICE[id-as]:+ $id_msg_part}"
         command mkdir -p "$local_dir"
     fi
 
     if [[ $update = -u && ${OPTS[opt_-q,--quiet]} != 1 ]]; then
-        local id_msg_part="{…} (identified as{ehi}:{rst} {id-as}$id_as{rst})"
-        +zinit-message "{nl}{info2}Updating snippet: {url}$sname{rst}${ICE[id-as]:+$id_msg_part}"
+        local id_msg_part="(id: {id-as}$id_as{rst})"
+        +zinit-message "{i} Updating snippet $sname ${ICE[id-as]:+ $id_msg_part}"
     fi
 
     # A flag for the annexes. 0 – no new commits, 1 - run-atpull mode,
@@ -988,7 +987,7 @@ builtin source "${ZINIT[BIN_DIR]}/zinit-side.zsh" || {
             (
                 () { setopt localoptions noautopushd; builtin cd -q "$local_dir"; } || return 4
 
-                (( !OPTS[opt_-q,--quiet] )) && +zinit-message "Downloading {apo}\`{url}$sname{apo}\`{rst}${${ICE[svn]+" (with Subversion)"}:-" (with curl, wget, lftp)"}{…}"
+                (( !OPTS[opt_-q,--quiet] )) && +zinit-message "{m} Downloading {url}$sname{rst}${${ICE[svn]+" (with Subversion)"}:-" (with curl, wget, lftp)"}"
 
                 if (( ${+ICE[svn]} )) {
                     if [[ $update = -u ]] {
@@ -1017,7 +1016,7 @@ builtin source "${ZINIT[BIN_DIR]}/zinit-side.zsh" || {
                             hook_rc=$?
                             [[ "$hook_rc" -ne 0 ]] && {
                                 retval="$hook_rc"
-                                builtin print -Pr -- "${ZINIT[col-warn]}Warning:%f%b ${ZINIT[col-obj]}${arr[5]}${ZINIT[col-warn]} hook returned with ${ZINIT[col-obj]}${hook_rc}${ZINIT[col-rst]}"
+                                +zinit-message "{w} ${arr[5]} hook returned with ${hook_rc}"
                             }
                         done
 
@@ -1026,9 +1025,9 @@ builtin source "${ZINIT[BIN_DIR]}/zinit-side.zsh" || {
                             # The condition is reversed on purpose – to show only
                             # the messages on an actual update
                             if (( OPTS[opt_-q,--quiet] )); then
-                                local id_msg_part="{…} (identified as{ehi}: {id-as}$id_as{rst})"
-                                +zinit-message "{nl}{info2}Updating snippet {url}${sname}{rst}${ICE[id-as]:+$id_msg_part}"
-                                +zinit-message "Downloading {apo}\`{rst}$sname{apo}\`{rst} (with Subversion){…}"
+                                local id_msg_part="(id: {id-as}$id_as{rst})"
+                                +zinit-message "{i} Updating snippet {url}${sname}{rst}${ICE[id-as]:+ $id_msg_part}"
+                                +zinit-message "{m} Downloading $sname via Subversion"
                             fi
                             .zinit-mirror-using-svn "$url" "-u" "$dirname" || return 4
                         }
@@ -1054,7 +1053,7 @@ builtin source "${ZINIT[BIN_DIR]}/zinit-side.zsh" || {
                             () {
                                 builtin emulate -LR zsh -o extendedglob ${=${options[xtrace]:#off}:+-o xtrace}
                                 zcompile -U "${list[1]}" &>/dev/null || \
-                                    +zinit-message "{u-warn}Warning{b-warn}:{rst} couldn't compile {apo}\`{file}${list[1]}{apo}\`{rst}."
+                                    +zinit-message "{w} Unable to compile {file}${list[1]}{rst}."
                             }
                         }
                     fi
@@ -1082,7 +1081,7 @@ builtin source "${ZINIT[BIN_DIR]}/zinit-side.zsh" || {
                     local -a matched
                     matched=( $local_dir/$dirname/$filename(DNms-$secs) )
                     if (( ${#matched} )) {
-                        +zinit-message "{info}Already up to date.{rst}"
+                        +zinit-message "{m} Already up to date"
                         # Empty-update return-short path – it also decides the
                         # pull-active flag after the return from this sub-shell
                         (( ${+ICE[run-atpull]} || OPTS[opt_-u,--urge] )) && skip_dl=1 || return 0
@@ -1120,7 +1119,7 @@ builtin source "${ZINIT[BIN_DIR]}/zinit-side.zsh" || {
                         if { ! .zinit-download-file-stdout "$url" 0 1 >! "$dirname/$filename" } {
                             if { ! .zinit-download-file-stdout "$url" 1 1 >! "$dirname/$filename" } {
                                 command rm -f "$dirname/$filename"
-                                +zinit-message "{u-warn}ERROR{b-warn}:{rst} Download failed."
+                                +zinit-message "{e} Download failed"
                                 return 4
                             }
                         }

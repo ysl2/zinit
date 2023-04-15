@@ -1,4 +1,4 @@
-#!/usr/bin/env zsh
+# vim: set expandtab filetype=zsh foldmarker=[[[,]]] foldmethod=marker shiftwidth=4 softtabstop=4 tabstop=4:
 #
 # Copyright (c) 2016-2020 Sebastian Gniazdowski and contributors
 # Copyright (c) 2021-2022 zdharma-continuum and contributors
@@ -176,11 +176,3 @@ print
 [[ $+ZINIT_CNORM == 1 && -n $TERM ]] && eval $ZINIT_CNORM
 
 unset ZINIT_CNORM ZINIT_CIVIS
-
-# Local Variables:
-# mode: Shell-Script
-# sh-indentation: 2
-# indent-tabs-mode: nil
-# sh-basic-offset: 2
-# End:
-# vim: ft=zsh sw=2 ts=2 et

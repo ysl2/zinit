@@ -1,4 +1,5 @@
-# -*- mode: sh; sh-indentation: 4; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
+# vim: set expandtab filetype=zsh foldmarker=[[[,]]] foldmethod=marker shiftwidth=4 softtabstop=4 tabstop=4:
+#
 # Copyright (c) 2016-2020 Sebastian Gniazdowski and contributors.
 
 # FUNCTION: :zinit-tmp-subst-source [[[
@@ -145,11 +146,3 @@ function $f {
         .zinit-unload _dtrace _dtrace
     fi
 } # ]]]
-
-# Local Variables:
-# mode: Shell-Script
-# sh-indentation: 2
-# indent-tabs-mode: nil
-# sh-basic-offset: 2
-# End:
-# vim: ft=zsh sw=2 ts=2 et foldmarker=[[[,]]] foldmethod=marker

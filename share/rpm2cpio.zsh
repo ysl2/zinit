@@ -1,6 +1,5 @@
 #!/usr/bin/env zsh
-#
-# -*- mode: sh; sh-indentation: 2; indent-tabs-mode: nil; sh-basic-offset: 2; -*-
+# vim: set expandtab filetype=zsh foldmarker=[[[,]]] foldmethod=marker shiftwidth=4 softtabstop=4 tabstop=4:
 #
 # Copyright (c) 2016-2020 Sebastian Gniazdowski and contributors
 # Copyright (c) 2021-2022 zdharma-continuum and contributors
@@ -54,11 +53,3 @@ else
 fi
 
 command "$UNPACKCMD[@]" 2>/dev/null | command "$DECOMPRESSCMD[@]"
-
-# Local Variables:
-# mode: Shell-Script
-# sh-indentation: 2
-# indent-tabs-mode: nil
-# sh-basic-offset: 2
-# End:
-# vim: ft=zsh sw=2 ts=2 et

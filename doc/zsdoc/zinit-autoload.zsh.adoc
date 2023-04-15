@@ -6,6 +6,8 @@ zinit-autoload.zsh - a shell script
 Documentation automatically generated with `zshelldoc'
 
 == FUNCTIONS
+ +zinit-status
+ +zinit-update
  .zinit-any-to-uspl2
  .zinit-at-eval
  .zinit-build-module
@@ -79,6 +81,178 @@ Documentation automatically generated with `zshelldoc'
 Has 5 line(s). No functions are called (may set up e.g. a hook, a Zle widget bound to a key, etc.).
 
 Uses feature(s): _source_
+
+==== +zinit-status
+
+Has 62 line(s). Calls functions:
+
+ +zinit-status
+ |-- .zinit-update-or-status
+ |   |-- .zinit-pager
+ |   |-- .zinit-update-or-status-snippet
+ |   |   |-- zinit-install.zsh/.zinit-update-snippet
+ |   |   |-- zinit-side.zsh/.zinit-compute-ice
+ |   |   `-- zinit.zsh/+zinit-message
+ |   |-- zinit-install.zsh/.zinit-get-latest-gh-r-url-part
+ |   |-- zinit-install.zsh/.zinit-setup-plugin-dir
+ |   |-- zinit-side.zsh/.zinit-any-colorify-as-uspl2
+ |   |-- zinit-side.zsh/.zinit-compute-ice
+ |   |-- zinit-side.zsh/.zinit-exists-physically
+ |   |-- zinit-side.zsh/.zinit-exists-physically-message
+ |   |-- zinit-side.zsh/.zinit-store-ices
+ |   |-- zinit-side.zsh/.zinit-two-paths
+ |   |-- zinit.zsh/+zinit-message
+ |   |-- zinit.zsh/.zinit-any-to-user-plugin
+ |   `-- zinit.zsh/.zinit-set-m-func
+ |-- .zinit-update-or-status-all
+ |   |-- .zinit-update-all-parallel
+ |   |   |-- .zinit-update-or-status
+ |   |   |   |-- .zinit-pager
+ |   |   |   |-- .zinit-update-or-status-snippet
+ |   |   |   |   |-- zinit-install.zsh/.zinit-update-snippet
+ |   |   |   |   |-- zinit-side.zsh/.zinit-compute-ice
+ |   |   |   |   `-- zinit.zsh/+zinit-message
+ |   |   |   |-- zinit-install.zsh/.zinit-get-latest-gh-r-url-part
+ |   |   |   |-- zinit-install.zsh/.zinit-setup-plugin-dir
+ |   |   |   |-- zinit-side.zsh/.zinit-any-colorify-as-uspl2
+ |   |   |   |-- zinit-side.zsh/.zinit-compute-ice
+ |   |   |   |-- zinit-side.zsh/.zinit-exists-physically
+ |   |   |   |-- zinit-side.zsh/.zinit-exists-physically-message
+ |   |   |   |-- zinit-side.zsh/.zinit-store-ices
+ |   |   |   |-- zinit-side.zsh/.zinit-two-paths
+ |   |   |   |-- zinit.zsh/+zinit-message
+ |   |   |   |-- zinit.zsh/.zinit-any-to-user-plugin
+ |   |   |   `-- zinit.zsh/.zinit-set-m-func
+ |   |   |-- .zinit-update-or-status-snippet
+ |   |   |   |-- zinit-install.zsh/.zinit-update-snippet
+ |   |   |   |-- zinit-side.zsh/.zinit-compute-ice
+ |   |   |   `-- zinit.zsh/+zinit-message
+ |   |   |-- .zinit-wait-for-update-jobs
+ |   |   |   `-- zinit.zsh/+zinit-message
+ |   |   |-- zinit-side.zsh/.zinit-any-colorify-as-uspl2
+ |   |   |-- zinit.zsh/+zinit-message
+ |   |   `-- zinit.zsh/.zinit-any-to-user-plugin
+ |   |-- .zinit-update-or-status
+ |   |   |-- .zinit-pager
+ |   |   |-- .zinit-update-or-status-snippet
+ |   |   |   |-- zinit-install.zsh/.zinit-update-snippet
+ |   |   |   |-- zinit-side.zsh/.zinit-compute-ice
+ |   |   |   `-- zinit.zsh/+zinit-message
+ |   |   |-- zinit-install.zsh/.zinit-get-latest-gh-r-url-part
+ |   |   |-- zinit-install.zsh/.zinit-setup-plugin-dir
+ |   |   |-- zinit-side.zsh/.zinit-any-colorify-as-uspl2
+ |   |   |-- zinit-side.zsh/.zinit-compute-ice
+ |   |   |-- zinit-side.zsh/.zinit-exists-physically
+ |   |   |-- zinit-side.zsh/.zinit-exists-physically-message
+ |   |   |-- zinit-side.zsh/.zinit-store-ices
+ |   |   |-- zinit-side.zsh/.zinit-two-paths
+ |   |   |-- zinit.zsh/+zinit-message
+ |   |   |-- zinit.zsh/.zinit-any-to-user-plugin
+ |   |   `-- zinit.zsh/.zinit-set-m-func
+ |   |-- .zinit-update-or-status-snippet
+ |   |   |-- zinit-install.zsh/.zinit-update-snippet
+ |   |   |-- zinit-side.zsh/.zinit-compute-ice
+ |   |   `-- zinit.zsh/+zinit-message
+ |   |-- zinit-install.zsh/.zinit-compinit
+ |   |-- zinit-side.zsh/.zinit-any-colorify-as-uspl2
+ |   |-- zinit.zsh/+zinit-message
+ |   |-- zinit.zsh/.zinit-any-to-user-plugin
+ |   `-- zinit.zsh/.zinit-get-mtime-into
+ |-- zinit-side.zsh/.zinit-compute-ice
+ |-- zinit.zsh/+zinit-message
+ `-- zinit.zsh/.zinit-any-to-user-plugin
+
+Uses feature(s): _setopt_, _zmodload_, _zparseopts_
+
+Called by:
+
+ zinit.zsh/zinit
+
+==== +zinit-update
+
+Has 64 line(s). Calls functions:
+
+ +zinit-update
+ |-- .zinit-update-or-status
+ |   |-- .zinit-pager
+ |   |-- .zinit-update-or-status-snippet
+ |   |   |-- zinit-install.zsh/.zinit-update-snippet
+ |   |   |-- zinit-side.zsh/.zinit-compute-ice
+ |   |   `-- zinit.zsh/+zinit-message
+ |   |-- zinit-install.zsh/.zinit-get-latest-gh-r-url-part
+ |   |-- zinit-install.zsh/.zinit-setup-plugin-dir
+ |   |-- zinit-side.zsh/.zinit-any-colorify-as-uspl2
+ |   |-- zinit-side.zsh/.zinit-compute-ice
+ |   |-- zinit-side.zsh/.zinit-exists-physically
+ |   |-- zinit-side.zsh/.zinit-exists-physically-message
+ |   |-- zinit-side.zsh/.zinit-store-ices
+ |   |-- zinit-side.zsh/.zinit-two-paths
+ |   |-- zinit.zsh/+zinit-message
+ |   |-- zinit.zsh/.zinit-any-to-user-plugin
+ |   `-- zinit.zsh/.zinit-set-m-func
+ |-- .zinit-update-or-status-all
+ |   |-- .zinit-update-all-parallel
+ |   |   |-- .zinit-update-or-status
+ |   |   |   |-- .zinit-pager
+ |   |   |   |-- .zinit-update-or-status-snippet
+ |   |   |   |   |-- zinit-install.zsh/.zinit-update-snippet
+ |   |   |   |   |-- zinit-side.zsh/.zinit-compute-ice
+ |   |   |   |   `-- zinit.zsh/+zinit-message
+ |   |   |   |-- zinit-install.zsh/.zinit-get-latest-gh-r-url-part
+ |   |   |   |-- zinit-install.zsh/.zinit-setup-plugin-dir
+ |   |   |   |-- zinit-side.zsh/.zinit-any-colorify-as-uspl2
+ |   |   |   |-- zinit-side.zsh/.zinit-compute-ice
+ |   |   |   |-- zinit-side.zsh/.zinit-exists-physically
+ |   |   |   |-- zinit-side.zsh/.zinit-exists-physically-message
+ |   |   |   |-- zinit-side.zsh/.zinit-store-ices
+ |   |   |   |-- zinit-side.zsh/.zinit-two-paths
+ |   |   |   |-- zinit.zsh/+zinit-message
+ |   |   |   |-- zinit.zsh/.zinit-any-to-user-plugin
+ |   |   |   `-- zinit.zsh/.zinit-set-m-func
+ |   |   |-- .zinit-update-or-status-snippet
+ |   |   |   |-- zinit-install.zsh/.zinit-update-snippet
+ |   |   |   |-- zinit-side.zsh/.zinit-compute-ice
+ |   |   |   `-- zinit.zsh/+zinit-message
+ |   |   |-- .zinit-wait-for-update-jobs
+ |   |   |   `-- zinit.zsh/+zinit-message
+ |   |   |-- zinit-side.zsh/.zinit-any-colorify-as-uspl2
+ |   |   |-- zinit.zsh/+zinit-message
+ |   |   `-- zinit.zsh/.zinit-any-to-user-plugin
+ |   |-- .zinit-update-or-status
+ |   |   |-- .zinit-pager
+ |   |   |-- .zinit-update-or-status-snippet
+ |   |   |   |-- zinit-install.zsh/.zinit-update-snippet
+ |   |   |   |-- zinit-side.zsh/.zinit-compute-ice
+ |   |   |   `-- zinit.zsh/+zinit-message
+ |   |   |-- zinit-install.zsh/.zinit-get-latest-gh-r-url-part
+ |   |   |-- zinit-install.zsh/.zinit-setup-plugin-dir
+ |   |   |-- zinit-side.zsh/.zinit-any-colorify-as-uspl2
+ |   |   |-- zinit-side.zsh/.zinit-compute-ice
+ |   |   |-- zinit-side.zsh/.zinit-exists-physically
+ |   |   |-- zinit-side.zsh/.zinit-exists-physically-message
+ |   |   |-- zinit-side.zsh/.zinit-store-ices
+ |   |   |-- zinit-side.zsh/.zinit-two-paths
+ |   |   |-- zinit.zsh/+zinit-message
+ |   |   |-- zinit.zsh/.zinit-any-to-user-plugin
+ |   |   `-- zinit.zsh/.zinit-set-m-func
+ |   |-- .zinit-update-or-status-snippet
+ |   |   |-- zinit-install.zsh/.zinit-update-snippet
+ |   |   |-- zinit-side.zsh/.zinit-compute-ice
+ |   |   `-- zinit.zsh/+zinit-message
+ |   |-- zinit-install.zsh/.zinit-compinit
+ |   |-- zinit-side.zsh/.zinit-any-colorify-as-uspl2
+ |   |-- zinit.zsh/+zinit-message
+ |   |-- zinit.zsh/.zinit-any-to-user-plugin
+ |   `-- zinit.zsh/.zinit-get-mtime-into
+ |-- zinit-side.zsh/.zinit-compute-ice
+ |-- zinit.zsh/+zinit-message
+ `-- zinit.zsh/.zinit-any-to-user-plugin
+
+Uses feature(s): _setopt_, _zmodload_, _zparseopts_
+
+Called by:
+
+ zinit.zsh/zinit
 
 ==== .zinit-any-to-uspl2
 
@@ -1066,7 +1240,6 @@ Uses feature(s): _setopt_, _source_, _zcompile_
 
 Called by:
 
- .zinit-update-or-status-all
  zinit.zsh/zinit
 
 ==== .zinit-show-all-reports
@@ -1409,14 +1582,15 @@ Called by:
 
 ==== .zinit-update-all-parallel
 
-Has 84 line(s). Calls functions:
+Has 79 line(s). Calls functions:
 
  .zinit-update-all-parallel
  |-- .zinit-update-or-status
  |   |-- .zinit-pager
  |   |-- .zinit-update-or-status-snippet
  |   |   |-- zinit-install.zsh/.zinit-update-snippet
- |   |   `-- zinit-side.zsh/.zinit-compute-ice
+ |   |   |-- zinit-side.zsh/.zinit-compute-ice
+ |   |   `-- zinit.zsh/+zinit-message
  |   |-- zinit-install.zsh/.zinit-get-latest-gh-r-url-part
  |   |-- zinit-install.zsh/.zinit-setup-plugin-dir
  |   |-- zinit-side.zsh/.zinit-any-colorify-as-uspl2
@@ -1430,7 +1604,8 @@ Has 84 line(s). Calls functions:
  |   `-- zinit.zsh/.zinit-set-m-func
  |-- .zinit-update-or-status-snippet
  |   |-- zinit-install.zsh/.zinit-update-snippet
- |   `-- zinit-side.zsh/.zinit-compute-ice
+ |   |-- zinit-side.zsh/.zinit-compute-ice
+ |   `-- zinit.zsh/+zinit-message
  |-- .zinit-wait-for-update-jobs
  |   `-- zinit.zsh/+zinit-message
  |-- zinit-side.zsh/.zinit-any-colorify-as-uspl2
@@ -1457,13 +1632,14 @@ ____
 
 ____
 
-Has 325 line(s). Calls functions:
+Has 314 line(s). Calls functions:
 
  .zinit-update-or-status
  |-- .zinit-pager
  |-- .zinit-update-or-status-snippet
  |   |-- zinit-install.zsh/.zinit-update-snippet
- |   `-- zinit-side.zsh/.zinit-compute-ice
+ |   |-- zinit-side.zsh/.zinit-compute-ice
+ |   `-- zinit.zsh/+zinit-message
  |-- zinit-install.zsh/.zinit-get-latest-gh-r-url-part
  |-- zinit-install.zsh/.zinit-setup-plugin-dir
  |-- zinit-side.zsh/.zinit-any-colorify-as-uspl2
@@ -1480,9 +1656,10 @@ Uses feature(s): _kill_, _read_, _setopt_, _source_, _trap_, _wait_
 
 Called by:
 
+ +zinit-status
+ +zinit-update
  .zinit-update-all-parallel
  .zinit-update-or-status-all
- zinit.zsh/zinit
 
 ==== .zinit-update-or-status-all
 
@@ -1496,19 +1673,16 @@ ____
 
 ____
 
-Has 133 line(s). Calls functions:
+Has 99 line(s). Calls functions:
 
  .zinit-update-or-status-all
- |-- .zinit-self-update
- |   |-- .zinit-pager
- |   |-- zinit.zsh/+zinit-message
- |   `-- zinit.zsh/.zinit-get-mtime-into
  |-- .zinit-update-all-parallel
  |   |-- .zinit-update-or-status
  |   |   |-- .zinit-pager
  |   |   |-- .zinit-update-or-status-snippet
  |   |   |   |-- zinit-install.zsh/.zinit-update-snippet
- |   |   |   `-- zinit-side.zsh/.zinit-compute-ice
+ |   |   |   |-- zinit-side.zsh/.zinit-compute-ice
+ |   |   |   `-- zinit.zsh/+zinit-message
  |   |   |-- zinit-install.zsh/.zinit-get-latest-gh-r-url-part
  |   |   |-- zinit-install.zsh/.zinit-setup-plugin-dir
  |   |   |-- zinit-side.zsh/.zinit-any-colorify-as-uspl2
@@ -1522,7 +1696,8 @@ Has 133 line(s). Calls functions:
  |   |   `-- zinit.zsh/.zinit-set-m-func
  |   |-- .zinit-update-or-status-snippet
  |   |   |-- zinit-install.zsh/.zinit-update-snippet
- |   |   `-- zinit-side.zsh/.zinit-compute-ice
+ |   |   |-- zinit-side.zsh/.zinit-compute-ice
+ |   |   `-- zinit.zsh/+zinit-message
  |   |-- .zinit-wait-for-update-jobs
  |   |   `-- zinit.zsh/+zinit-message
  |   |-- zinit-side.zsh/.zinit-any-colorify-as-uspl2
@@ -1532,7 +1707,8 @@ Has 133 line(s). Calls functions:
  |   |-- .zinit-pager
  |   |-- .zinit-update-or-status-snippet
  |   |   |-- zinit-install.zsh/.zinit-update-snippet
- |   |   `-- zinit-side.zsh/.zinit-compute-ice
+ |   |   |-- zinit-side.zsh/.zinit-compute-ice
+ |   |   `-- zinit.zsh/+zinit-message
  |   |-- zinit-install.zsh/.zinit-get-latest-gh-r-url-part
  |   |-- zinit-install.zsh/.zinit-setup-plugin-dir
  |   |-- zinit-side.zsh/.zinit-any-colorify-as-uspl2
@@ -1546,7 +1722,8 @@ Has 133 line(s). Calls functions:
  |   `-- zinit.zsh/.zinit-set-m-func
  |-- .zinit-update-or-status-snippet
  |   |-- zinit-install.zsh/.zinit-update-snippet
- |   `-- zinit-side.zsh/.zinit-compute-ice
+ |   |-- zinit-side.zsh/.zinit-compute-ice
+ |   `-- zinit.zsh/+zinit-message
  |-- zinit-install.zsh/.zinit-compinit
  |-- zinit-side.zsh/.zinit-any-colorify-as-uspl2
  |-- zinit.zsh/+zinit-message
@@ -1557,7 +1734,8 @@ Uses feature(s): _setopt_, _source_
 
 Called by:
 
- zinit.zsh/zinit
+ +zinit-status
+ +zinit-update
 
 ==== .zinit-update-or-status-snippet
 
@@ -1571,11 +1749,12 @@ ____
 
 ____
 
-Has 34 line(s). Calls functions:
+Has 33 line(s). Calls functions:
 
  .zinit-update-or-status-snippet
  |-- zinit-install.zsh/.zinit-update-snippet
- `-- zinit-side.zsh/.zinit-compute-ice
+ |-- zinit-side.zsh/.zinit-compute-ice
+ `-- zinit.zsh/+zinit-message
 
 Uses feature(s): _source_
 
@@ -1587,7 +1766,7 @@ Called by:
 
 ==== .zinit-wait-for-update-jobs
 
-Has 18 line(s). Calls functions:
+Has 14 line(s). Calls functions:
 
  .zinit-wait-for-update-jobs
  `-- zinit.zsh/+zinit-message

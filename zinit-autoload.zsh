@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# vim: set expandtab filetype=zsh foldmarker=[[[,]]] foldmethod=marker shiftwidth=4 softtabstop=4 tabstop=4:
 #
 # zdharma-continuum/zinit/zinit-autoload.zsh
 # Copyright (c) 2016-2021 Sebastian Gniazdowski
@@ -2745,11 +2746,142 @@ print -- "\nAvailable ice-modifiers:\n\n${ice_order[*]}"
     fi
 } # ]]]
 
+# FUNCTION: +zinit-status [[[
++zinit-status () {
+    emulate -LR zsh ${=${options[xtrace]:#off}:+-o xtrace}
+    setopt extendedglob noksharrays nokshglob nullglob typesetsilent warncreateglobal
+    local o_all o_help o_parallel o_plugins o_snippets o_reset o_urge o_yes rc
+    local -a usage=(
+      'Usage:'
+      '  zinit status [options] [plugins...]'
+      ' '
+      'Options:'
+      '  -a, --all         Status of all installed plugins, snippets, and completions'
+      '  -h, --help        Show list of command-line options'
+      '  -s, --snippets    Get status of snippets'
+      '  -p, --plugins     Get stats of plugins'
+    )
+    zmodload zsh/zutil
+    zparseopts -D -F -K -- \
+      {a,-all}=o_all \
+      {h,-help}=o_help \
+      {p,-plugins}=o_plugins \
+      {s,-snippets}=o_snippets \
+    || return 1
+    (( $#o_help )) && {
+        print -l -- $usage
+        return 0
+    }
+    if (( $#o_all )); then
+        (( $#o_plugins || $#o_snippets )) && {
+            +zinit-message "{e} Invalid usage: Options --all and --snippets/--plugins are mutually exclusive"
+            return 1
+        }
+        .zinit-update-or-status-all 'status'
+        return $?
+    fi
+    (( $#o_plugins && $#o_snippets )) && {
+        +zinit-message "{e} Invalid usage: Options --snippets and --plugins are mutually exclusive"
+    }
+    (( $#o_plugins && !$#o_snippets )) && {
+        print '==> plugins option active'
+    }
+    (( $#o_snippets && !$#o_plugins )) && {
+        print '==> snippets option active'
+    }
+    (( !$# )) && {
+        +zinit-message "{e} invalid usage: status command requires at least 1 plugin or snippet argument"
+        return 0
+    }
+    +zinit-message "Status ${#@} plugins & snippets"
+    local i
+    for i in $@; do
+        local -A ICE ICE2
+        local the_id="${${i:#(%|/)*}}" filename is_snippet local_dir
+        .zinit-any-to-user-plugin "$i"
+        .zinit-compute-ice "$the_id" "pack" ICE2 local_dir filename is_snippet || return 1
+        if [[ "$local_dir" != /* ]]; then
+            +zinit-message "{e} No plugin or snippet '$i' found"
+            return 1
+        fi
+        local ___id="${ICE2[teleid]:-${ICE2[id-as]}}"
+        [[ -z ${___id//[[:space:]]/} ]] && ___id="${ICE2[id-as]:-$ICE2[teleid]}"
+        .zinit-update-or-status status "$i" ""
+        ___retval=$?
+    done
+    return 0
+} # ]]]
+# FUNCTION: +zinit-update [[[
++zinit-update () {
+    emulate -LR zsh ${=${options[xtrace]:#off}:+-o xtrace}
+    setopt extendedglob warncreateglobal typesetsilent noshortloops nomonitor nonotify
+    local i o_all o_help o_parallel o_reset o_snippets o_urge rc
+    local -a usage=(
+      'Usage:'
+      '  zinit update [options] [plugins...]'
+      ' '
+      'Options:'
+      '  -a, --all         Update all installed plugins, snippets, and completions'
+      '  -h, --help        Show list of command-line options'
+      '  -p, --parallel    Updates are ran in parallel'
+      '  -r, --reset       Reset the repository before updating'
+      '  -s, --snippets    Update snippets'
+      '  -u, --urge        Delete unloaded plugins and snippets'
+    )
+    zmodload zsh/zutil
+    zparseopts -D -F -K -- \
+      {a,-all}=o_all \
+      {h,-help}=o_help \
+      {p,-parallel}=o_parallel \
+      {s,-snippets}=o_snippets \
+      {r,-reset}=o_reset \
+      {u,-urge}=o_urge \
+    || return 1
+    (( $#o_help )) && {
+        print -l -- $usage
+        return 0
+    }
+    if (( $#o_all )); then
+        print '==> all option active'
+        .zinit-update-or-status-all 'update'
+        return $?
+    fi
+    (( $#o_parallel )) && {
+        print '==> parallel option active'
+        .zinit-update-or-status-all 'update'
+        return $?
+    }
+    (( $#o_reset )) && {
+        print '==> reset option active'
+    }
+    (( $#o_urge )) && {
+        print '==> urge option active'
+    }
+    (( !$# )) && {
+        +zinit-message "{e} invalid usage: update command requires at least 1 plugin or snippet argument"
+        return 0
+    }
+    +zinit-message "Updating ${#@} plugins & snippets"
+    for i in $@; do
+        local -A ICE ICE2
+        local the_id="${${i:#(%|/)*}}" filename is_snippet local_dir ___id
+        .zinit-any-to-user-plugin "$i"
+        .zinit-compute-ice "$the_id" "pack" ICE2 local_dir filename is_snippet || return 1
+        [[ "$local_dir" != /* ]] && {
+            +zinit-message "{e} No plugin or snippet '$i' found"
+            return 1
+        }
+        ___id="${ICE2[teleid]:-${ICE2[id-as]}}"
+        [[ -z ${___id//[[:space:]]/} ]] && ___id="${ICE2[id-as]:-$ICE2[teleid]}"
+        .zinit-update-or-status update "$i" ""
+    done
+    rc=$?
+    return $rc
+} # ]]]
 # FUNCTION: .zinit-update-all-parallel [[[
 .zinit-update-all-parallel() {
     builtin emulate -LR zsh ${=${options[xtrace]:#off}:+-o xtrace}
-    setopt extendedglob warncreateglobal typesetsilent \
-        noshortloops nomonitor nonotify
+    setopt extendedglob warncreateglobal typesetsilent noshortloops nomonitor nonotify
 
     local id_as repo snip uspl user plugin PUDIR="$(mktemp -d)"
 
@@ -2760,86 +2892,82 @@ print -- "\nAvailable ice-modifiers:\n\n${ice_order[*]}"
 
     files=( ${ZINIT[SNIPPETS_DIR]}/**/(._zinit|._zplugin)/mode(ND) )
     main_counter=${#files}
-    if (( OPTS[opt_-s,--snippets] || !OPTS[opt_-l,--plugins] )) {
-        for snip ( "${files[@]}" ) {
-            main_counter=main_counter-1
-            # The continue may cause the tail of processes to fall-through to the following plugins-specific `wait'
-            # Should happen only in a very special conditions
-            # TODO handle this
-            [[ ! -f ${snip:h}/url ]] && continue
-            [[ -f ${snip:h}/id-as ]] && \
-                id_as="$(<${snip:h}/id-as)" || \
-                id_as=
+    for snip ( "${files[@]}" ) {
+        main_counter=main_counter-1
+        # The continue may cause the tail of processes to fall-through to the following plugins-specific `wait'
+        # Should happen only in a very special conditions
+        # TODO handle this
+        [[ ! -f ${snip:h}/url ]] && continue
+        [[ -f ${snip:h}/id-as ]] && \
+            id_as="$(<${snip:h}/id-as)" || \
+            id_as=
 
-            counter+=1
-            local ef_id="${id_as:-$(<${snip:h}/url)}"
-            local PUFILEMAIN=${${ef_id#/}//(#m)[\/=\?\&:]/${map[$MATCH]}}
-            local PUFILE=$PUDIR/${counter}_$PUFILEMAIN.out
+        counter+=1
+        local ef_id="${id_as:-$(<${snip:h}/url)}"
+        local PUFILEMAIN=${${ef_id#/}//(#m)[\/=\?\&:]/${map[$MATCH]}}
+        local PUFILE=$PUDIR/${counter}_$PUFILEMAIN.out
 
-            .zinit-update-or-status-snippet "$st" "$ef_id" &>! $PUFILE &
+        .zinit-update-or-status-snippet "$st" "$ef_id" &>! $PUFILE &
 
-            PUAssocArray[$!]=$PUFILE
+        PUAssocArray[$!]=$PUFILE
 
-            .zinit-wait-for-update-jobs snippets
-        }
+        .zinit-wait-for-update-jobs snippets
     }
 
     counter=0
     PUAssocArray=()
 
-    if (( OPTS[opt_-l,--plugins] || !OPTS[opt_-s,--snippets] )) {
-        local -a files2
-        files=( ${ZINIT[PLUGINS_DIR]}/*(ND/) )
+    local -a files2
+    files=( ${ZINIT[PLUGINS_DIR]}/*(ND/) )
 
-        # Pre-process plugins
-        for repo ( $files ) {
-            uspl=${repo:t}
-            # Two special cases
-            [[ $uspl = custom || $uspl = _local---zinit ]] && continue
+    # Pre-process plugins
+    for repo ( $files ) {
+        uspl=${repo:t}
+        # Two special cases
+        [[ $uspl = custom || $uspl = _local---zinit ]] && continue
 
-            # Check if repository has a remote set
-            if [[ -f $repo/.git/config ]] {
-                local -a config
-                config=( ${(f)"$(<$repo/.git/config)"} )
-                if [[ ${#${(M)config[@]:#\[remote[[:blank:]]*\]}} -eq 0 ]] {
-                    continue
-                }
-            }
-
-            .zinit-any-to-user-plugin "$uspl"
-            local user=${reply[-2]} plugin=${reply[-1]}
-
-            # Must be a git repository or a binary release
-            if [[ ! -d $repo/.git && ! -f $repo/._zinit/is_release ]] {
+        # Check if repository has a remote set
+        if [[ -f $repo/.git/config ]] {
+            local -a config
+            config=( ${(f)"$(<$repo/.git/config)"} )
+            if [[ ${#${(M)config[@]:#\[remote[[:blank:]]*\]}} -eq 0 ]] {
                 continue
             }
-            files2+=( $repo )
         }
 
-        main_counter=${#files2}
-        for repo ( "${files2[@]}" ) {
-            main_counter=main_counter-1
+        .zinit-any-to-user-plugin "$uspl"
+        local user=${reply[-2]} plugin=${reply[-1]}
 
-            uspl=${repo:t}
-            id_as=${uspl//---//}
-
-            counter+=1
-            local PUFILEMAIN=${${id_as#/}//(#m)[\/=\?\&:]/${map[$MATCH]}}
-            local PUFILE=$PUDIR/${counter}_$PUFILEMAIN.out
-
-            .zinit-any-colorify-as-uspl2 "$uspl"
-            +zinit-message "Updating $REPLY{…}" >! $PUFILE
-
-            .zinit-any-to-user-plugin "$uspl"
-            local user=${reply[-2]} plugin=${reply[-1]}
-
-            .zinit-update-or-status update "$user" "$plugin" &>>! $PUFILE &
-
-            PUAssocArray[$!]=$PUFILE
-
-            .zinit-wait-for-update-jobs plugins
-
+        # Must be a git repository or a binary release
+        if [[ ! -d $repo/.git && ! -f $repo/._zinit/is_release ]] {
+            continue
         }
+        files2+=( $repo )
+    }
+
+    main_counter=${#files2}
+    for repo ( "${files2[@]}" ) {
+        main_counter=main_counter-1
+
+        uspl=${repo:t}
+        id_as=${uspl//---//}
+
+        counter+=1
+        local PUFILEMAIN=${${id_as#/}//(#m)[\/=\?\&:]/${map[$MATCH]}}
+        local PUFILE=$PUDIR/${counter}_$PUFILEMAIN.out
+
+        .zinit-any-colorify-as-uspl2 "$uspl"
+        +zinit-message "{i} Updating $REPLY" >! $PUFILE
+
+        .zinit-any-to-user-plugin "$uspl"
+        local user=${reply[-2]} plugin=${reply[-1]}
+
+        .zinit-update-or-status update "$user" "$plugin" &>>! $PUFILE &
+
+        PUAssocArray[$!]=$PUFILE
+
+        .zinit-wait-for-update-jobs plugins
+
     }
     # Shouldn't happen
     # (( ${#PUAssocArray} > 0 )) && wait ${(k)PUAssocArray}
@@ -2882,9 +3010,7 @@ print -- "\nAvailable ice-modifiers:\n\n${ice_order[*]}"
     if (( was_snippet )) {
         .zinit-exists-physically "$user" "$plugin" || return $retval
         .zinit-any-colorify-as-uspl2 "$2" "$3"
-        (( !OPTS[opt_-q,--quiet] )) && \
-            +zinit-message "{msg2}Updating also \`$REPLY{rst}{msg2}'" \
-                "plugin (already updated a snippet of the same name){…}{rst}"
+        +zinit-message "{msg2}Updating also \`$REPLY plugin (already updated a snippet of the same name){…}{rst}"
     } else {
         .zinit-exists-physically-message "$user" "$plugin" || return 1
     }
@@ -2894,8 +3020,11 @@ print -- "\nAvailable ice-modifiers:\n\n${ice_order[*]}"
         return $retval
     fi
 
-    command rm -f ${TMPDIR:-${TMPDIR:-/tmp}}/zinit-execs.$$.lst ${TMPDIR:-${TMPDIR:-/tmp}}/zinit.installed_comps.$$.lst \
-                    ${TMPDIR:-${TMPDIR:-/tmp}}/zinit.skipped_comps.$$.lst ${TMPDIR:-${TMPDIR:-/tmp}}/zinit.compiled.$$.lst
+    command rm -f -- \
+        ${TMPDIR:-${TMPDIR:-/tmp}}/zinit-execs.$$.lst \
+        ${TMPDIR:-${TMPDIR:-/tmp}}/zinit.installed_comps.$$.lst \
+        ${TMPDIR:-${TMPDIR:-/tmp}}/zinit.skipped_comps.$$.lst \
+        ${TMPDIR:-${TMPDIR:-/tmp}}/zinit.compiled.$$.lst
 
     # A flag for the annexes. 0 – no new commits, 1 - run-atpull mode,
     # 2 – full update/there are new commits to download, 3 - full but
@@ -2904,8 +3033,7 @@ print -- "\nAvailable ice-modifiers:\n\n${ice_order[*]}"
 
     (( ${#ICE[@]} > 0 )) && { ZINIT_SICE[$user${${user:#(%|/)*}:+/}$plugin]=""; local nf="-nftid"; }
 
-    .zinit-compute-ice "$user${${user:#(%|/)*}:+/}$plugin" "pack$nf" \
-        ice local_dir filename is_snippet || return 1
+    .zinit-compute-ice "$user${${user:#(%|/)*}:+/}$plugin" "pack$nf" ice local_dir filename is_snippet || return 1
 
     .zinit-any-to-user-plugin ${ice[teleid]:-$id_as}
     user=${reply[1]} plugin=${reply[2]}
@@ -2930,18 +3058,18 @@ print -- "\nAvailable ice-modifiers:\n\n${ice_order[*]}"
         local -a config
         config=( ${(f)"$(<$local_dir/.git/config)"} )
         if [[ ${#${(M)config[@]:#\[remote[[:blank:]]*\]}} -eq 0 ]]; then
-            (( !OPTS[opt_-q,--quiet] )) && {
-                .zinit-any-colorify-as-uspl2 "$id_as"
-                [[ $id_as = _local/* ]] && builtin print -r -- "Skipping local plugin $REPLY" || \
-                    builtin print -r -- "$REPLY doesn't have a remote set, will not fetch"
-            }
+            .zinit-any-colorify-as-uspl2 "$id_as"
+            [[ $id_as = _local/* ]] \
+                && +zinit-message "{w} Skipping local plugin $REPLY" \
+                || +zinit-message "{w} $REPLY doesn't have a remote set, will not fetch"
             return 1
         fi
     fi
 
-    command rm -f $local_dir/.zinit_lastupd
+    command rm -f -- $local_dir/.zinit_lastupd
 
     if (( 1 )); then
+        +zinit-message "{i} Updating $id_as"
         if [[ -z ${ice[is_release]} && ${ice[from]} = (gh-r|github-rel|cygwin) ]] {
             ice[is_release]=true
         }
@@ -2979,20 +3107,18 @@ print -- "\nAvailable ice-modifiers:\n\n${ice_order[*]}"
                     break
                 }
             }
-            if (( ZINIT[annex-multi-flag:pull-active] <= 1 && !OPTS[opt_-q,--quiet] )) {
-                +zinit-message "{info}[{pre}${ice[from]}{info}]{rst} latest version ({version}${version}{rst}) already installed"
+            if (( ZINIT[annex-multi-flag:pull-active] <= 1 )) {
+                +zinit-message "{m} ${id_as} latest version {version}${version}{rst} already installed"
             }
         }
 
         if (( 1 )) {
             if (( ZINIT[annex-multi-flag:pull-active] >= 1 )) {
-                if (( OPTS[opt_-q,--quiet] && !PUPDATE )) {
-                    .zinit-any-colorify-as-uspl2 "$id_as"
-                    (( ZINIT[first-plugin-mark] )) && {
-                        ZINIT[first-plugin-mark]=0
-                    } || builtin print
-                    builtin print "\rUpdating $REPLY"
-                }
+                .zinit-any-colorify-as-uspl2 "$id_as"
+                (( ZINIT[first-plugin-mark] )) && {
+                    ZINIT[first-plugin-mark]=0
+                } || builtin print
+                +zinit-message "{i} Updating $REPLY"
 
                 ICE=( "${(kv)ice[@]}" )
                 # Run annexes' atpull hooks (the before atpull-ice ones).
@@ -3017,18 +3143,16 @@ print -- "\nAvailable ice-modifiers:\n\n${ice_order[*]}"
                     if ! .zinit-setup-plugin-dir "$user" "$plugin" "$id_as" release -u $version; then
                         ZINIT[annex-multi-flag:pull-active]=0
                     fi
-                    if (( OPTS[opt_-q,--quiet] != 1 )) {
-                        builtin print
-                    }
+                    # if (( OPTS[opt_-q,--quiet] != 1 )) {
+                    #     builtin print
+                    # }
                 }
                 ICE=()
             }
         }
 
-        if [[ -d $local_dir/.git ]] && ( builtin cd -q $local_dir ; git show-ref --verify --quiet refs/heads/main ); then
-            local main_branch=main
-        else
-            local main_branch=master
+        if [[ -d $local_dir/.git ]]; then
+            local main_branch="$(basename $(git -C ${local_dir} rev-parse --abbrev-ref origin/HEAD))"
         fi
 
         if (( ! is_release )) {
@@ -3046,7 +3170,7 @@ print -- "\nAvailable ice-modifiers:\n\n${ice_order[*]}"
                               (( ZINIT[first-plugin-mark] )) && {
                                   ZINIT[first-plugin-mark]=0
                               } || builtin print
-                              builtin print "Updating $REPLY"
+                              +zinit-message "{i} Updating $REPLY"
                           }
                       }
                       builtin print $line
@@ -3075,7 +3199,7 @@ print -- "\nAvailable ice-modifiers:\n\n${ice_order[*]}"
                           (( ZINIT[first-plugin-mark] )) && {
                               ZINIT[first-plugin-mark]=0
                           } || builtin print
-                          builtin print "\rUpdating $REPLY"
+                          +zinit-message "{i} Updating $REPLY"
                       }
                   } else {
                       ZINIT[annex-multi-flag:pull-active]=0
@@ -3098,7 +3222,7 @@ print -- "\nAvailable ice-modifiers:\n\n${ice_order[*]}"
                       [[ "$hook_rc" -ne 0 ]] && {
                           # note: this will effectively return the last != 0 rc
                           retval="$hook_rc"
-                          builtin print -Pr -- "${ZINIT[col-warn]}Warning:%f%b ${ZINIT[col-obj]}${arr[5]}${ZINIT[col-warn]} hook returned with ${ZINIT[col-obj]}${hook_rc}${ZINIT[col-rst]}"
+                          +zinit-message "{w} ${arr[5]} hook returned with {num}$hook_rc{rst}"
                       }
                   done
                   ICE=()
@@ -3112,16 +3236,12 @@ print -- "\nAvailable ice-modifiers:\n\n${ice_order[*]}"
         if [[ -d $local_dir/.git ]]; then
             (
                 builtin cd -q "$local_dir" # || return 1 - don't return, maybe it's some hook's logic
-                if (( OPTS[opt_-q,--quiet] )) {
-                    command git pull --recurse-submodules ${=ice[pullopts]:---ff-only} origin ${ice[ver]:-$main_branch} &> /dev/null
-                } else {
-                    command git pull --recurse-submodules ${=ice[pullopts]:---ff-only} origin ${ice[ver]:-$main_branch} |& command grep -E -v '(FETCH_HEAD|up.to.date\.|From.*://)'
-                }
+                command git pull --recurse-submodules ${=ice[pullopts]:---ff-only} origin ${ice[ver]:-$main_branch} &> /dev/null
             )
         fi
         if [[ -n ${(v)ice[(I)(mv|cp|atpull|ps-on-update|cargo)]} || $+ice[sbin]$+ice[make]$+ice[extract]$+ice[configure] -ne 0 ]] {
-            if (( !OPTS[opt_-q,--quiet] && ZINIT[annex-multi-flag:pull-active] == 1 )) {
-                +zinit-message -n "{pre}[update]{msg3} Continuing with the update because "
+            if (( ZINIT[annex-multi-flag:pull-active] == 1 )) {
+                +zinit-message -n "{i} Continuing with the update because "
                 (( ${+ice[run-atpull]} )) && \
                     +zinit-message "{ice}run-atpull{apo}''{msg3} ice given.{rst}" || \
                     +zinit-message "{opt}-u{msg3}/{opt}--urge{msg3} given.{rst}"
@@ -3145,7 +3265,7 @@ print -- "\nAvailable ice-modifiers:\n\n${ice_order[*]}"
                 [[ "$hook_rc" -ne 0 ]] && {
                     # note: this will effectively return the last != 0 rc
                     retval="$hook_rc"
-                    builtin print -Pr -- "${ZINIT[col-warn]}Warning:%f%b ${ZINIT[col-obj]}${arr[5]}${ZINIT[col-warn]} hook returned with ${ZINIT[col-obj]}${hook_rc}${ZINIT[col-rst]}"
+                    +zinit-message "{w} ${arr[5]} hook returned with {num}$hook_rc{rst}"
                 }
             done
 
@@ -3163,7 +3283,7 @@ print -- "\nAvailable ice-modifiers:\n\n${ice_order[*]}"
                 [[ "$hook_rc" -ne 0 ]] && {
                     # note: this will effectively return the last != 0 rc
                     retval="$hook_rc"
-                    builtin print -Pr -- "${ZINIT[col-warn]}Warning:%f%b ${ZINIT[col-obj]}${arr[5]}${ZINIT[col-warn]} hook returned with ${ZINIT[col-obj]}${hook_rc}${ZINIT[col-rst]}"
+                    +zinit-message "{w} ${arr[5]} hook returned with {num}$hook_rc{rst}"
                 }
             done
             ICE=()
@@ -3188,7 +3308,7 @@ print -- "\nAvailable ice-modifiers:\n\n${ice_order[*]}"
         [[ "$hook_rc" -ne 0 ]] && {
             # note: this will effectively return the last != 0 rc
             retval="$hook_rc"
-            builtin print -Pr -- "${ZINIT[col-warn]}Warning:%f%b ${ZINIT[col-obj]}${arr[5]}${ZINIT[col-warn]} hook returned with ${ZINIT[col-obj]}${hook_rc}${ZINIT[col-rst]}"
+            +zinit-message "{w} ${arr[5]} hook returned with {num}$hook_rc{rst}"
         }
     done
     ICE=()
@@ -3219,147 +3339,109 @@ print -- "\nAvailable ice-modifiers:\n\n${ice_order[*]}"
 # on disk). Also updates (i.e. redownloads) snippets.
 #
 # User-action entry point.
-.zinit-update-or-status-all() {
+.zinit-update-or-status-all () {
     builtin emulate -LR zsh ${=${options[xtrace]:#off}:+-o xtrace}
     setopt extendedglob nullglob warncreateglobal typesetsilent noshortloops
-
     local -F2 SECONDS=0
-
-    .zinit-self-update -q
-
-    [[ $2 = restart ]] && \
-        +zinit-message "{msg2}Restarting the update with the new codebase loaded.{rst}"$'\n'
-
+    [[ $2 = restart ]] && +zinit-message "{m} Restarting the update with the new codebase loaded"
     local file
     integer sum el update_rc
-    for file ( "" -side -install -autoload ) {
-        .zinit-get-mtime-into "${ZINIT[BIN_DIR]}/zinit$file.zsh" el; sum+=el
-    }
-
-    # Reload Zinit?
-    if [[ $2 != restart ]] && (( ZINIT[mtime] + ZINIT[mtime-side] +
-        ZINIT[mtime-install] + ZINIT[mtime-autoload] != sum
-    )) {
-        +zinit-message "{msg2}Detected Zinit update in another session -" \
-            "{pre}reloading Zinit{msg2}{…}{rst}"
+    for file in "" -side -install -autoload; do
+        .zinit-get-mtime-into "${ZINIT[BIN_DIR]}/zinit$file.zsh" el
+        sum+=el
+    done
+    if [[ $2 != restart ]] && (( ZINIT[mtime] + ZINIT[mtime-side] + ZINIT[mtime-install] + ZINIT[mtime-autoload] != sum)); then
+        +zinit-message "{msg2}Detected Zinit update in another session -" "{pre}reloading Zinit{msg2}{…}{rst}"
         source $ZINIT[BIN_DIR]/zinit.zsh
         source $ZINIT[BIN_DIR]/zinit-side.zsh
         source $ZINIT[BIN_DIR]/zinit-install.zsh
         source $ZINIT[BIN_DIR]/zinit-autoload.zsh
-        for file ( "" -side -install -autoload ) {
+        for file in "" -side -install -autoload; do
             .zinit-get-mtime-into "${ZINIT[BIN_DIR]}/zinit$file.zsh" "ZINIT[mtime$file]"
-        }
-        +zinit-message "%B{pname}Done.{rst}"$'\n'
+        done
         .zinit-update-or-status-all "$1" restart
         return $?
-    }
-
+    fi
     integer retval
-
-    if (( OPTS[opt_-p,--parallel] )) && [[ $1 = update ]] {
-        (( !OPTS[opt_-q,--quiet] )) && \
-            +zinit-message '{info2}Parallel Update Starts Now{…}{rst}'
+    if (( OPTS[opt_-p,--parallel] )) && [[ $1 = update ]]; then
+        (( !OPTS[opt_-q,--quiet] )) && +zinit-message 'Parallel Update starting'
         .zinit-update-all-parallel
         retval=$?
-        .zinit-compinit 1 1 &>/dev/null
+        .zinit-compinit 1 1 &> /dev/null
         rehash
-        if (( !OPTS[opt_-q,--quiet] )) {
-            +zinit-message "{msg2}The update took {obj}${SECONDS}{msg2} seconds{rst}"
-        }
+        if (( !OPTS[opt_-q,--quiet] )); then
+            +zinit-message "{nl}Update took {num}${SECONDS}{rst} seconds"
+        fi
         return $retval
-    }
-
+    fi
     local st=$1 id_as repo snip pd user plugin
     integer PUPDATE=0
-
     local -A ICE
-
-
-    if (( OPTS[opt_-s,--snippets] || !OPTS[opt_-l,--plugins] )) {
+    if (( OPTS[opt_-s,--snippets] || !OPTS[opt_-l,--plugins] )); then
         local -a snipps
-        snipps=( ${ZINIT[SNIPPETS_DIR]}/**/(._zinit|._zplugin)(ND) )
-
-        [[ $st != status && ${OPTS[opt_-q,--quiet]} != 1 && -n $snipps ]] && \
-            +zinit-message "{info}Note:{rst} updating also unloaded snippets"
-
-        for snip ( ${ZINIT[SNIPPETS_DIR]}/**/(._zinit|._zplugin)/mode(D) ) {
+        snipps=(${ZINIT[SNIPPETS_DIR]}/**/(._zinit|._zplugin)(ND))
+        [[ $st != status && ${OPTS[opt_-q,--quiet]} != 1 && -n $snipps ]] && +zinit-message "Updating unloaded snippets"
+        for snip in ${ZINIT[SNIPPETS_DIR]}/**/(._zinit|._zplugin)/mode(D); do
             [[ ! -f ${snip:h}/url ]] && continue
-            [[ -f ${snip:h}/id-as ]] && \
-                id_as="$(<${snip:h}/id-as)" || \
-                id_as=
+            [[ -f ${snip:h}/id-as ]] && id_as="$(<${snip:h}/id-as)"  || id_as=
             .zinit-update-or-status-snippet "$st" "${id_as:-$(<${snip:h}/url)}"
             ICE=()
-        }
+        done
         [[ -n $snipps ]] && builtin print
-    }
-
-    ICE=()
-
-    if (( OPTS[opt_-s,--snippets] && !OPTS[opt_-l,--plugins] )) {
-        return
-    }
-
-    if [[ $st = status ]]; then
-        (( !OPTS[opt_-q,--quiet] )) && \
-            +zinit-message "{info}Note:{rst} status done also for unloaded plugins"
-    else
-        (( !OPTS[opt_-q,--quiet] )) && \
-            +zinit-message "{info}Note:{rst} updating also unloaded plugins"
     fi
-
+    ICE=()
+    if (( OPTS[opt_-s,--snippets] && !OPTS[opt_-l,--plugins] )); then
+        return
+    fi
+    if [[ $st = status ]]; then
+        (( !OPTS[opt_-q,--quiet] )) && +zinit-message "Reporting status for unloaded plugins"
+    else
+        (( !OPTS[opt_-q,--quiet] )) && +zinit-message "Updating unloaded plugins"
+    fi
     ZINIT[first-plugin-mark]=init
-
     for repo in ${ZINIT[PLUGINS_DIR]}/*; do
         pd=${repo:t}
-
-        # Two special cases
         [[ $pd = custom || $pd = _local---zinit ]] && continue
-
         .zinit-any-colorify-as-uspl2 "$pd"
-
-        # Check if repository has a remote set
         if [[ -f $repo/.git/config ]]; then
             local -a config
-            config=( ${(f)"$(<$repo/.git/config)"} )
+            config=(${(f)"$(<$repo/.git/config)"})
             if [[ ${#${(M)config[@]:#\[remote[[:blank:]]*\]}} -eq 0 ]]; then
-                if (( !OPTS[opt_-q,--quiet] )) {
-                    [[ $pd = _local---* ]] && \
-                        builtin print -- "\nSkipping local plugin $REPLY" || \
-                        builtin print "\n$REPLY doesn't have a remote set, will not fetch"
-                }
+                if (( !OPTS[opt_-q,--quiet] )); then
+                    [[ $pd = _local---* ]] \
+                        && +zinit-message "{w} Skipping local plugin $REPLY" \
+                        || +zinit-message "{w} $REPLY has no Git remote, will not fetch"
+                fi
                 continue
             fi
         fi
-
         .zinit-any-to-user-plugin "$pd"
         local user=${reply[-2]} plugin=${reply[-1]}
-
-        # Must be a git repository or a binary release
-        if [[ ! -d $repo/.git && ! -f $repo/._zinit/is_release ]]; then
-            (( !OPTS[opt_-q,--quiet] )) && \
-                builtin print "$REPLY: not a git repository"
-            continue
-        fi
-
+        # if [[ ! -d $repo/.git || -f $repo/._zinit/is_release ]]; then
+        #     (( !OPTS[opt_-q,--quiet] )) && +zinit-message "{m} $REPLY is not a git repository"
+        #     continue
+        # fi
         if [[ $st = status ]]; then
-            builtin print "\nStatus for plugin $REPLY"
-            ( builtin cd -q "$repo"; command git status )
+            +zinit-message "{i} $REPLY status"
+            [[ -d $repo/.git ]] && {
+                ( command git -C "$repo" status --short --branch )
+            } || {
+                +zinit-message "{m} is not a git repository"
+            }
         else
-            (( !OPTS[opt_-q,--quiet] )) && builtin print "Updating $REPLY" || builtin print -n .
+            (( !OPTS[opt_-q,--quiet] )) && +zinit-message "{i} Updating $REPLY"
             .zinit-update-or-status update "$user" "$plugin"
             update_rc=$?
             [[ $update_rc -ne 0 ]] && {
-                +zinit-message "🚧{warn}Warning: {pid}${user}/${plugin} {warn}update returned {obj}$update_rc"
+                +zinit-message "{w} update returned {num}$update_rc{rst}"
                 retval=$?
             }
         fi
     done
-
-    .zinit-compinit 1 1 &>/dev/null
-    if (( !OPTS[opt_-q,--quiet] )) {
-        +zinit-message "{msg2}The update took {obj}${SECONDS}{msg2} seconds{rst}"
-    }
-
+    .zinit-compinit 1 1 &> /dev/null
+    if (( !OPTS[opt_-q,--quiet] )); then
+        +zinit-message "{nl}Update took {b}{num}${SECONDS}{rst} seconds"
+    fi
     return "$retval"
 } # ]]]
 # FUNCTION: .zinit-update-or-status-snippet [[[
@@ -3370,24 +3452,23 @@ print -- "\nAvailable ice-modifiers:\n\n${ice_order[*]}"
 # $2 - snippet URL
 .zinit-update-or-status-snippet() {
     local st="$1" URL="${2%/}" local_dir filename is_snippet
-    (( ${#ICE[@]} > 0 )) && { ZINIT_SICE[$URL]=""; local nf="-nftid"; }
+    (( ${#ICE[@]} > 0 )) && {
+        ZINIT_SICE[$URL]=""
+        local nf="-nftid"
+    }
     local -A ICE2
-    .zinit-compute-ice "$URL" "pack$nf" \
-        ICE2 local_dir filename is_snippet || return 1
-
     integer retval
+    .zinit-compute-ice "$URL" "pack$nf" ICE2 local_dir filename is_snippet || return 1
 
     if [[ "$st" = "status" ]]; then
         if (( ${+ICE2[svn]} )); then
-            builtin print -r -- "${ZINIT[col-info]}Status for ${${${local_dir:h}:t}##*--}/${local_dir:t}${ZINIT[col-rst]}"
+            +zinit-message "{i} ${${${local_dir:h}:t}##*--}/${local_dir:t} Status"
             ( builtin cd -q "$local_dir"; command svn status -vu )
             retval=$?
-            builtin print
         else
-            builtin print -r -- "${ZINIT[col-info]}Status for ${${local_dir:h}##*--}/$filename${ZINIT[col-rst]}"
-            ( builtin cd -q "$local_dir"; command ls -lth $filename )
+            +zinit-message "{i} ${${local_dir:h}##*--}/$filename Status"
+            ( builtin cd -q "$local_dir"; command ls -lth -- $filename )
             retval=$?
-            builtin print
         fi
     else
         (( ${+functions[.zinit-setup-plugin-dir]} )) || builtin source ${ZINIT[BIN_DIR]}"/zinit-install.zsh"
@@ -3405,25 +3486,21 @@ print -- "\nAvailable ice-modifiers:\n\n${ice_order[*]}"
     return $retval
 } # ]]]
 # FUNCTION: .zinit-wait-for-update-jobs [[[
-.zinit-wait-for-update-jobs() {
+.zinit-wait-for-update-jobs () {
     local tpe=$1
-    if (( counter > OPTS[value] || main_counter == 0 )) {
+    if (( counter > OPTS[value] || main_counter == 0 )); then
         wait ${(k)PUAssocArray}
         local ind_file
-        for ind_file ( ${^${(von)PUAssocArray}}.ind(DN.) ) {
+        for ind_file in ${^${(von)PUAssocArray}}.ind(DN.); do
             command cat ${ind_file:r}
-            (( !OPTS[opt_-d,--debug] && !ZINIT[DEBUG_MODE] )) && \
-                command rm -f $ind_file
-        }
-        (( !OPTS[opt_-d,--debug] && !ZINIT[DEBUG_MODE] )) && \
-            command rm -f ${(v)PUAssocArray}
+            (( !OPTS[opt_-d,--debug] && !ZINIT[DEBUG_MODE] )) && command rm -f $ind_file
+        done
+        (( !OPTS[opt_-d,--debug] && !ZINIT[DEBUG_MODE] )) && command rm -f ${(v)PUAssocArray}
         counter=0
         PUAssocArray=()
-    } elif (( counter == 1 && !OPTS[opt_-q,--quiet] )) {
-        +zinit-message "{obj}Spawning the next{num}" \
-            "${OPTS[value]}{obj} concurrent update jobs" \
-            "({msg2}${tpe}{obj}){…}{rst}"
-    }
+    elif (( counter == 1 && !OPTS[opt_-q,--quiet] )); then
+       +zinit-message "{m} Spawning {num}${OPTS[value]}{rst} concurrent update jobs (${tpe})"
+    fi
 } # ]]]
 
 # FUNCTION: zi::version [[[
@@ -3434,5 +3511,3 @@ zi::version() {
 	+zinit-message "zinit{cmd} $(git --git-dir=$(realpath ${ZINIT[BIN_DIR]}/.git) describe --tags) {rst}(${OSTYPE}_${CPUTYPE})"
 	return $?
 } # ]]]
-
-# vim: set fenc=utf8 ffs=unix foldmarker=[[[,]]] foldmethod=marker ft=zsh list et sts=2 sw=2 ts=2 tw=100:

@@ -84,7 +84,7 @@ PRECMD-HOOK @zinit-scheduler
 
 ==== Script Body
 
-Has 244 line(s). Calls functions:
+Has 246 line(s). Calls functions:
 
  Script-Body
  |-- +zinit-message
@@ -176,6 +176,8 @@ Has 244 line(s). Calls functions:
  |   |-- zinit-additional.zsh/.zinit-debug-start
  |   |-- zinit-additional.zsh/.zinit-debug-stop
  |   |-- zinit-additional.zsh/.zinit-debug-unload
+ |   |-- zinit-autoload.zsh/+zinit-status
+ |   |-- zinit-autoload.zsh/+zinit-update
  |   |-- zinit-autoload.zsh/.zinit-cdisable
  |   |-- zinit-autoload.zsh/.zinit-cenable
  |   |-- zinit-autoload.zsh/.zinit-clear-completions
@@ -200,8 +202,6 @@ Has 244 line(s). Calls functions:
  |   |-- zinit-autoload.zsh/.zinit-uncompile-plugin
  |   |-- zinit-autoload.zsh/.zinit-uninstall-completions
  |   |-- zinit-autoload.zsh/.zinit-unload
- |   |-- zinit-autoload.zsh/.zinit-update-or-status
- |   |-- zinit-autoload.zsh/.zinit-update-or-status-all
  |   |-- zinit-autoload.zsh/zi::version
  |   |-- zinit-install.zsh/.zinit-compile-plugin
  |   |-- zinit-install.zsh/.zinit-compinit
@@ -251,6 +251,8 @@ Called by:
  zinit-additional.zsh/.zinit-debug-start
  zinit-additional.zsh/.zinit-debug-unload
  zinit-additional.zsh/:zinit-tmp-subst-source
+ zinit-autoload.zsh/+zinit-status
+ zinit-autoload.zsh/+zinit-update
  zinit-autoload.zsh/.zinit-build-module
  zinit-autoload.zsh/.zinit-cd
  zinit-autoload.zsh/.zinit-confirm
@@ -262,6 +264,7 @@ Called by:
  zinit-autoload.zsh/.zinit-uninstall-completions
  zinit-autoload.zsh/.zinit-update-all-parallel
  zinit-autoload.zsh/.zinit-update-or-status-all
+ zinit-autoload.zsh/.zinit-update-or-status-snippet
  zinit-autoload.zsh/.zinit-update-or-status
  zinit-autoload.zsh/.zinit-wait-for-update-jobs
  zinit-autoload.zsh/zi::version
@@ -384,6 +387,8 @@ Called by:
  .zinit-load
  .zinit-run
  :zinit-tmp-subst-autoload
+ zinit-autoload.zsh/+zinit-status
+ zinit-autoload.zsh/+zinit-update
  zinit-autoload.zsh/.zinit-any-to-uspl2
  zinit-autoload.zsh/.zinit-changes
  zinit-autoload.zsh/.zinit-compile-uncompile-all
@@ -1578,7 +1583,7 @@ ____
 
 ____
 
-Has 564 line(s). Calls functions:
+Has 543 line(s). Calls functions:
 
  zinit
  |-- +zinit-message
@@ -1660,6 +1665,8 @@ Has 564 line(s). Calls functions:
  |-- zinit-additional.zsh/.zinit-debug-start
  |-- zinit-additional.zsh/.zinit-debug-stop
  |-- zinit-additional.zsh/.zinit-debug-unload
+ |-- zinit-autoload.zsh/+zinit-status
+ |-- zinit-autoload.zsh/+zinit-update
  |-- zinit-autoload.zsh/.zinit-cdisable
  |-- zinit-autoload.zsh/.zinit-cenable
  |-- zinit-autoload.zsh/.zinit-clear-completions
@@ -1684,8 +1691,6 @@ Has 564 line(s). Calls functions:
  |-- zinit-autoload.zsh/.zinit-uncompile-plugin
  |-- zinit-autoload.zsh/.zinit-uninstall-completions
  |-- zinit-autoload.zsh/.zinit-unload
- |-- zinit-autoload.zsh/.zinit-update-or-status
- |-- zinit-autoload.zsh/.zinit-update-or-status-all
  |-- zinit-autoload.zsh/zi::version
  |-- zinit-install.zsh/.zinit-compile-plugin
  |-- zinit-install.zsh/.zinit-compinit
@@ -1822,6 +1827,8 @@ Has 1 line(s). Calls functions:
      |-- zinit-additional.zsh/.zinit-debug-start
      |-- zinit-additional.zsh/.zinit-debug-stop
      |-- zinit-additional.zsh/.zinit-debug-unload
+     |-- zinit-autoload.zsh/+zinit-status
+     |-- zinit-autoload.zsh/+zinit-update
      |-- zinit-autoload.zsh/.zinit-cdisable
      |-- zinit-autoload.zsh/.zinit-cenable
      |-- zinit-autoload.zsh/.zinit-clear-completions
@@ -1846,8 +1853,6 @@ Has 1 line(s). Calls functions:
      |-- zinit-autoload.zsh/.zinit-uncompile-plugin
      |-- zinit-autoload.zsh/.zinit-uninstall-completions
      |-- zinit-autoload.zsh/.zinit-unload
-     |-- zinit-autoload.zsh/.zinit-update-or-status
-     |-- zinit-autoload.zsh/.zinit-update-or-status-all
      |-- zinit-autoload.zsh/zi::version
      |-- zinit-install.zsh/.zinit-compile-plugin
      |-- zinit-install.zsh/.zinit-compinit
@@ -1891,7 +1896,7 @@ ____
 
 ____
 
-Has 120 line(s). Doesn't call other functions.
+Has 134 line(s). Doesn't call other functions.
 
 Called by:
 

@@ -1,3 +1,4 @@
+# vim: set expandtab filetype=zsh foldmarker=[[[,]]] foldmethod=marker shiftwidth=4 softtabstop=4 tabstop=4:
 #
 # zdharma-continuum/zinit/zinit.zsh
 # Copyright (c) 2016-2021 Sebastian Gniazdowski
@@ -93,6 +94,7 @@ teleid|trackbinds|trigger-load|\
 unload|\
 ver|verbose|\
 wait|wrap"
+
 ZINIT[nval-ice-list]="\
 \!bash|\!csh|\!ksh|\!sh|\
 aliases|\
@@ -110,8 +112,8 @@ reset|run-atpull|\
 sh|silent|\
 trackbinds|\
 verbose"
+
 ZINIT[cmds]="\
--help|-h|\
 add-fpath|\
 bindkeys|\
 cclear|cd|cdclear|cdisable|cdlist|cdreplay|cenable|changes|clist|compile|compiled|compinit|completions|create|creinstall|csearch|cuninstall|\
@@ -2588,19 +2590,16 @@ zinit() {
         --command  opt_-x,--command
         cdclear       "--help|--quiet|-h|-q"
         cdreplay      "--help|--quiet|-h|-q"
-        delete        "--all|--clean|--help|--quiet|--yes|-a|-c|-h|-q|-y"
         env-whitelist "--help|--verbose|-h|-v"
         light         "--help|-b|-h"
         snippet       "--command|--force|--help|-f|-h|-x"
         times         "--help|-h|-m|-s"
         unload        "--help|--quiet|-h|-q"
-        update        "--all|--help|--no-pager|--parallel|--plugins|--quiet|--reset|--snippets|--urge|--verbose|-L|-a|-h|-n|-p|-q|-r|-s|-u|-v"
         version       ""
     )
 
     cmd="$1"
-    if [[ $cmd == (times|unload|env-whitelist|update|snippet|load|light|cdreplay|\
-cdclear) ]]; then
+    if [[ $cmd == (times|unload|env-whitelist|snippet|load|light|cdreplay|cdclear) ]]; then
         if (( $@[(I)-*] || OPTS[opt_-h,--help] )); then
             .zinit-parse-opts "$cmd" "$@"
             if (( OPTS[opt_-h,--help] )); then
@@ -2772,8 +2771,8 @@ cdclear) ]]; then
 
                     if [[ ${reply[-1]} -eq 1 && -n ${ICE[trigger-load]} ]] {
                         () {
-                            builtin setopt localoptions extendedglob
                             local ___mode
+                            builtin setopt localoptions extendedglob
                             (( ___is_snippet > 0 )) && ___mode=snippet || ___mode="${${${ICE[light-mode]+light}}:-load}"
                             for MATCH ( ${(s.;.)ICE[trigger-load]} ) {
                                 eval "${MATCH#!}() {
@@ -2916,7 +2915,7 @@ You can try to prepend {apo}${___q}{lhi}@{apo}'{error} to the ID if the last ice
                    { "${reply[5]}" "$@"; return $?; } || \
                    { +zinit-message "({error}Couldn't find the subcommand-handler \`{obj}${reply[5]}{error}' of the z-annex \`{file}${reply[3]}{error}')"; return 1; }
            }
-           (( ${+functions[.zinit-confirm]} )) || builtin source "${ZINIT[BIN_DIR]}/zinit-autoload.zsh" || return 1
+           builtin source "${ZINIT[BIN_DIR]}/zinit-autoload.zsh" || return 1
            case "$1" in
                 (zstatus)
                     .zinit-show-zstatus
@@ -2946,30 +2945,12 @@ You can try to prepend {apo}${___q}{lhi}@{apo}'{error} to the ID if the last ice
                     .zinit-list-bindkeys
                     ;;
                  (update)
-                    (( ${+ICE[if]} )) && { eval "${ICE[if]}" } || return 1
-                    for REPLY ( ${(s.;.)ICE[has]} ) {
-                        (( ${+commands[$REPLY]} )) || return 1
-                    }
                     shift
-                    .zinit-parse-opts update "$@"
-                    builtin set -- "${reply[@]}"
-                    if [[ ${OPTS[opt_-a,--all]} -eq 1 || ${OPTS[opt_-p,--parallel]} -eq 1 || ${OPTS[opt_-s,--snippets]} -eq 1 || ${OPTS[opt_-l,--plugins]} -eq 1 || -z $1$2${ICE[teleid]}${ICE[id-as]} ]]; then
-                        [[ -z $1$2 && $(( OPTS[opt_-a,--all] + OPTS[opt_-p,--parallel] + OPTS[opt_-s,--snippets] + OPTS[opt_-l,--plugins] )) -eq 0 ]] && { builtin print -r -- "Assuming --all is passed"; sleep 3; }
-                        (( OPTS[opt_-p,--parallel] )) && OPTS[value]=${1:-15}
-                        .zinit-update-or-status-all update; ___retval=$?
-                    else
-                        local ___key ___id="${1%%(///|//|/)}${2:+/}${2%%(///|//|/)}"
-                        [[ -z ${___id//[[:space:]]/} ]] && ___id="${ICE[id-as]:-$ICE[teleid]}"
-                        .zinit-update-or-status update "$___id" ""; ___retval=$?
-                    fi
+                    +zinit-update "$@"
                     ;;
                 (status)
-                    if [[ $2 = --all || ( -z $2 && -z $3 ) ]]; then
-                        [[ -z $2 ]] && { builtin print -r -- "Assuming --all is passed"; sleep 3; }
-                        .zinit-update-or-status-all status; ___retval=$?
-                    else
-                        .zinit-update-or-status status "${2%%(///|//|/)}" "${3%%(///|//|/)}"; ___retval=$?
-                    fi
+                    shift
+                    +zinit-status "$@"
                     ;;
                 (report)
                     if [[ $2 = --all || ( -z $2 && -z $3 ) ]]; then
@@ -3130,7 +3111,6 @@ You can try to prepend {apo}${___q}{lhi}@{apo}'{error} to the ID if the last ice
              esac
              ;;
     esac
-
     return ___retval
 } # ]]]
 # FUNCTION: zicdreplay [[[
@@ -3317,11 +3297,3 @@ zle -N zi-browse-symbol-pbackwards zi-browse-symbol
 zle -N zi-browse-symbol-pforwards zi-browse-symbol
 zstyle -s ':zinit:browse-symbol' key ZINIT_TMP || ZINIT_TMP='\eQ'
 [[ -n $ZINIT_TMP ]] && bindkey $ZINIT_TMP zi-browse-symbol
-
-# Local Variables:
-# mode: Shell-Script
-# sh-indentation: 2
-# indent-tabs-mode: nil
-# sh-basic-offset: 2
-# End:
-# vim: ft=zsh sw=2 ts=2 et foldmarker=[[[,]]] foldmethod=marker

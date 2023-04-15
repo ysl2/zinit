@@ -193,7 +193,7 @@ ____
 
 ____
 
-Has 377 line(s). Calls functions:
+Has 376 line(s). Calls functions:
 
  .zinit-download-snippet
  |-- .zinit-download-file-stdout

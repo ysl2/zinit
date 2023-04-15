@@ -116,6 +116,8 @@ Uses feature(s): _setopt_
 
 Called by:
 
+ zinit-autoload.zsh/+zinit-status
+ zinit-autoload.zsh/+zinit-update
  zinit-autoload.zsh/.zinit-delete
  zinit-autoload.zsh/.zinit-edit
  zinit-autoload.zsh/.zinit-recall
@@ -158,6 +160,8 @@ ____
  
  $1 - plugin spec (4 formats: user---plugin, user/plugin, user, plugin)
  $2 - plugin (only when $1 - i.e. user - given)
+ 
+ REPLY
 
 ____
 

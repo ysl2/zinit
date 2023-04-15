@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# vim: set expandtab filetype=zsh foldmarker=[[[,]]] foldmethod=marker shiftwidth=4 softtabstop=4 tabstop=4:
 #
 # Copyright (c) 2016-2020 Sebastian Gniazdowski and contributors
 # Copyright (c) 2021-2022 zdharma-continuum and contributors
@@ -116,7 +117,7 @@
       ___sice[svn]=""
       ___local_dir="$___s_path"
     else
-      if [[ ! -e "$___path" ]] { 
+      if [[ ! -e "$___path" ]] {
         builtin print -r -- "No such snippet, looked at paths (1): $___s_path, and: $___path";
         return 1;
       }
@@ -222,6 +223,8 @@
 #
 # $1 - plugin spec (4 formats: user---plugin, user/plugin, user, plugin)
 # $2 - plugin (only when $1 - i.e. user - given)
+#
+# REPLY
 .zinit-exists-physically() {
   .zinit-any-to-user-plugin "$1" "$2"
   if [[ ${reply[-2]} = % ]]; then
@@ -387,11 +390,3 @@
 
   reply=( "$local_dirA/$dirnameA" "$svn_dirA" "$local_dirB/$dirnameB" "${fileB_there[1]##$local_dirB/$dirnameB/#}" )
 } # ]]]
-
-# Local Variables:
-# mode: Shell-Script
-# sh-indentation: 2
-# indent-tabs-mode: nil
-# sh-basic-offset: 2
-# End:
-# vim: ft=zsh sw=2 ts=2 et foldmarker=[[[,]]] foldmethod=marker

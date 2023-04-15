@@ -419,7 +419,7 @@ builtin source "${ZINIT[BIN_DIR]}/zinit-side.zsh" || {
                     :zinit-git-clone() {
                         command git clone --progress ${(s: :)ICE[cloneopts]---recursive} \
                             ${(s: :)ICE[depth]:+--depth ${ICE[depth]}} \
-                            "${ICE[proto]:-https}://${site:-${ICE[from]:-github.com}}/$remote_url_path" \
+                            "git@git.zhlh6.cn:$remote_url_path" \
                             "$local_path" \
                             --config transfer.fsckobjects=false \
                             --config receive.fsckobjects=false \

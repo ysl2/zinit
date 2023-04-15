@@ -719,7 +719,7 @@ ZINIT[EXTENDED_GLOB]=""
         command git -C "${ZINIT[MODULE_DIR]}" reset --hard HEAD
         command git -C "${ZINIT[MODULE_DIR]}" pull
     else
-        command git clone "https://github.com/zdharma-continuum/zinit-module.git" "${ZINIT[MODULE_DIR]}" || {
+        command git clone "git@git.zhlh6.cn:zdharma-continuum/zinit-module.git" "${ZINIT[MODULE_DIR]}" || {
             builtin print "${ZINIT[col-error]}Failed to clone module repo${ZINIT[col-rst]}"
             return 1
         }
@@ -1122,7 +1122,7 @@ ZINIT[EXTENDED_GLOB]=""
         else
             curl --silent -u "$user" https://api.github.com/user/repos -d '{"name":"'"$plugin"'"}' >/dev/null
         fi
-        command git clone "https://github.com/${${${(M)isorg:#(y|yes)}:+$org}:-$user}/${plugin}.git" "${${${(M)isorg:#(y|yes)}:+$org}:-$user}---${plugin//\//---}" || {
+        command git clone "git@git.zhlh6.cn:${${${(M)isorg:#(y|yes)}:+$org}:-$user}/${plugin}.git" "${${${(M)isorg:#(y|yes)}:+$org}:-$user}---${plugin//\//---}" || {
             builtin print "${ZINIT[col-error]}Creation of remote repository $uspl2col ${ZINIT[col-error]}failed${ZINIT[col-rst]}"
             builtin print "${ZINIT[col-error]}Bad credentials?${ZINIT[col-rst]}"
             return 1

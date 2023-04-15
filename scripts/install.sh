@@ -180,7 +180,7 @@ zinit_install() {
     "${COLOR_BOLD_MAGENTA}${ZINIT_INSTALL_DIR}"
   {
     command git clone --progress --branch "$ZINIT_BRANCH" \
-      "https://github.com/${ZINIT_REPO}" \
+      "git@git.zhlh6.cn:${ZINIT_REPO}.git" \
       "${ZINIT_REPO_DIR_NAME}" 2>&1 | {
       "${ZINIT_TMPDIR}/git-process-output.zsh" || cat
     }
@@ -214,7 +214,7 @@ edit_zshrc() {
 if [[ ! -f ${zinit_home_escaped}/${ZINIT_REPO_DIR_NAME}/zinit.zsh ]]; then
     print -P "%F{33} %F{220}Installing %F{33}ZDHARMA-CONTINUUM%F{220} Initiative Plugin Manager (%F{33}${ZINIT_REPO}%F{220})…%f"
     command mkdir -p "${zinit_home_escaped}" && command chmod g-rwX "${zinit_home_escaped}"
-    command git clone https://github.com/${ZINIT_REPO} "${zinit_home_escaped}/${ZINIT_REPO_DIR_NAME}" && \\
+    command git clone git@git.zhlh6.cn:${ZINIT_REPO}.git "${zinit_home_escaped}/${ZINIT_REPO_DIR_NAME}" && \\
         print -P "%F{33} %F{34}Installation successful.%f%b" || \\
         print -P "%F{160} The clone has failed.%f%b"
 fi
